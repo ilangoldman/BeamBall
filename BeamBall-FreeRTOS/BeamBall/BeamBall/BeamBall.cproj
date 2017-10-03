@@ -32,12 +32,13 @@
     <option id="common.boards" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.basic.clock" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.basic.gpio" value="Add" config="" content-id="Atmel.ASF" />
-    <option id="common.services.freertos.sam_example" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.utils.stdio.stdio_serial" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.pio" value="Add" config="" content-id="Atmel.ASF" />
-    <option id="sam.utils.cmsis.sam3n.source.template" value="Add" config="" content-id="Atmel.ASF" />
     <option id="thirdparty.os.freertos.version" value="Add" config="7.0.0" content-id="Atmel.ASF" />
+    <option id="sam.drivers.pwm" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.freertos.sam_example" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.utils.cmsis.sam3n.source.template" value="Add" config="" content-id="Atmel.ASF" />
   </options>
   <configurations>
     <configuration key="config.compiler.armgcc.create_aux" value="no" default="no" content-id="Atmel.ASF" />
@@ -45,6 +46,9 @@
     <configuration key="config.compiler.iarewarm.heap_size" value="0x1000" default="0x1000" content-id="Atmel.ASF" />
     <configuration key="config.board.sam3n_ek.led" value="yes" default="yes" content-id="Atmel.ASF" />
     <configuration key="config.thirdparty.os.freertos.version" value="7.0.0" default="7.0.0" content-id="Atmel.ASF" />
+    <configuration key="config.compiler.armgcc.printf" value="iprintf" default="iprintf" content-id="Atmel.ASF" />
+    <configuration key="config.compiler.armgcc.scanf" value="iscanf" default="iscanf" content-id="Atmel.ASF" />
+    <configuration key="config.sam.pio.pio_handler" value="yes" default="yes" content-id="Atmel.ASF" />
   </configurations>
   <files>
     <file path="src/ASF/common/boards/board.h" framework="" version="" source="common/boards/board.h" changed="False" content-id="Atmel.ASF" />
@@ -214,6 +218,8 @@
     <file path="src/ASF/thirdparty/freertos/freertos-7.0.0/source/queue.c" framework="" version="" source="thirdparty/freertos/freertos-7.0.0/source/queue.c" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/thirdparty/freertos/freertos-7.0.0/source/tasks.c" framework="" version="" source="thirdparty/freertos/freertos-7.0.0/source/tasks.c" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/thirdparty/freertos/freertos-7.0.0/source/timers.c" framework="" version="" source="thirdparty/freertos/freertos-7.0.0/source/timers.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/pwm/pwm.c" framework="" version="3.34.1" source="sam\drivers\pwm\pwm.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/sam/drivers/pwm/pwm.h" framework="" version="3.34.1" source="sam\drivers\pwm\pwm.h" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.34.1/common.services.freertos.sam_example.sam3n_ek/html/index.html" />
   <offline-documentation help="" />
@@ -271,6 +277,7 @@
       <Value>../src/ASF/sam/drivers/pio</Value>
       <Value>../src</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pwm</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize most (-O3)</armgcc.compiler.optimization.level>
@@ -318,6 +325,7 @@
       <Value>../src/ASF/sam/drivers/pio</Value>
       <Value>../src</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pwm</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM3=true -DBOARD=SAM3N_EK -D__FREERTOS__ -D__SAM3N4C__ -Dprintf=iprintf -Dscanf=iscanf</armgcc.preprocessingassembler.general.AssemblerFlags>
@@ -348,6 +356,7 @@
       <Value>../src/ASF/sam/drivers/pio</Value>
       <Value>../src</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pwm</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
 </ArmGcc>
@@ -399,6 +408,7 @@
       <Value>../src/ASF/sam/drivers/pio</Value>
       <Value>../src</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pwm</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -447,6 +457,7 @@
       <Value>../src/ASF/sam/drivers/pio</Value>
       <Value>../src</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pwm</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
@@ -478,6 +489,7 @@
       <Value>../src/ASF/sam/drivers/pio</Value>
       <Value>../src</Value>
       <Value>../src/config</Value>
+      <Value>../src/ASF/sam/drivers/pwm</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -508,6 +520,7 @@
     <Folder Include="src\ASF\sam\drivers\" />
     <Folder Include="src\ASF\sam\drivers\pio\" />
     <Folder Include="src\ASF\sam\drivers\pmc\" />
+    <Folder Include="src\ASF\sam\drivers\pwm\" />
     <Folder Include="src\ASF\sam\drivers\uart\" />
     <Folder Include="src\ASF\sam\drivers\usart\" />
     <Folder Include="src\ASF\sam\utils\" />
@@ -974,6 +987,12 @@
     <Compile Include="src\ASF\sam\drivers\pmc\sleep.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ASF\sam\drivers\pwm\pwm.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\pwm\pwm.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\ASF\sam\drivers\uart\uart.c">
       <SubType>compile</SubType>
     </Compile>

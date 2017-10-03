@@ -102,6 +102,17 @@
 #define TASK_MOTOR_PRIORITY					(tskIDLE_PRIORITY)
 #define TASK_CONTROL_PRIORITY				(tskIDLE_PRIORITY)
 
+#define PWM_FREQUENCY      20000
+#define PERIOD_VALUE       100
+#define INIT_DUTY_VALUE    0
+
+pwm_channel_t g_pwm_channel_led;
+uint32_t sensor_counter = 0;
+
+xTaskHandle *pTaskSensor = NULL;
+xTaskHandle *pTaskControle = NULL;
+xTaskHandle *pTaskMotor = NULL;
+
 
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
 		signed char *pcTaskName);
@@ -110,7 +121,6 @@ extern void vApplicationTickHook(void);
 extern void vApplicationMallocFailedHook(void);
 extern void xPortSysTickHandler(void);
 
-uint32_t sensor_counter = 0;
 
 #if !(SAMV71 || SAME70)
 /**
@@ -149,7 +159,7 @@ extern void vApplicationIdleHook(void)
 extern void vApplicationTickHook(void)
 {
 	// count the time ellapsed since last sensor trigger
-	sensor_counter++;
+	//sensor_counter++;
 }
 
 extern void vApplicationMallocFailedHook(void)
@@ -235,16 +245,49 @@ static void vTaskReadSensor(void *pvParameters)
 	UNUSED(pvParameters);
 	for (;;) {
 		sensor_counter = 0;
-		// set trigger pin output to 1
-		//VTaskDelay(10us);
-		// set trigger pin output to 0
-		// vTaskSuspend() // suspend task until echo returns
+		gpio_pin_is_high(PIO_PA16);
+		// vTaskDelay(1); // implement taskDelay as a for loop
+		gpio_pin_is_low(PIO_PA16);
 		
+		// read from queue ISR
+
 		// use semaphore to read sensor_counter
-		// distanceCM = sensor_counter/58;
+		// distanceCM = queueISRCounter/58;
 		
+		vTaskDelay(1);
 		// vtaskSuspend() // suspend task until 'malha de controle' calls for a new read
 	}
+}
+
+static void vConfigureSensorISR() {
+	// configure sensor interrupt
+}
+
+static void vSensorISR() {
+	// write in queue sensorISR
+}
+
+static void vConfigurePWM() {
+	pmc_enable_periph_clk(ID_PWM);
+	pwm_channel_disable(PWM, PWM_CHANNEL_0);
+	pwm_clock_t clock_setting = {
+		.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
+		.ul_clkb = 0,
+		.ul_mck = sysclk_get_cpu_hz()
+	};
+
+	pwm_init(PWM, &clock_setting);
+	g_pwm_channel_led.ul_prescaler = PWM_CMR_CPRE_CLKA;
+	g_pwm_channel_led.ul_period = PERIOD_VALUE;
+	g_pwm_channel_led.ul_duty = 50;
+	g_pwm_channel_led.channel = PWM_CHANNEL_0;
+	pwm_channel_init(PWM, &g_pwm_channel_led);
+	pwm_channel_enable(PWM, PWM_CHANNEL_0);
+}
+
+void vPWMUpdateDuty (double duty) {
+	g_pwm_channel_led.channel = PIN_PWM_LED0_CHANNEL;
+	pwm_channel_update_duty(PWM, &g_pwm_channel_led, duty);
 }
 
 /**
@@ -254,12 +297,16 @@ static void vTaskRunMotor(void *pvParameters)
 {
 	UNUSED(pvParameters);
 	for (;;) {
-		// use semaphore to read motorPosition
-		// set pwm to motorPosition
-		
-		// vtaskSuspend() // suspend task until 'malha de controle' calls for a new position of the motor
+
+		// read from queue Malha de Controle MotorPos
+
+		//vPWMUpdateDuty(motorPos); // execute motor
 	}
 }
+
+// create timer with 10us (timer Handler)
+// timer handler counts the time from the sensor start up
+
 
 /**
  * \brief This task, when activated, will calculate the new position of the motos based on the sensor data
@@ -268,7 +315,11 @@ static void vTaskMalhaControle(void *pvParameters)
 {
 	UNUSED(pvParameters);
 	for (;;) {
-		// ?
+		// read from sensor queue distanceCM
+
+		// do some control shit!
+
+		// writes to queue Motor Position
 	}
 }
 
