@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief Board configuration.
+ * \brief ILI9225 configuration.
  *
  * Copyright (c) 2011-2015 Atmel Corporation. All rights reserved.
  *
@@ -40,19 +40,30 @@
  * \asf_license_stop
  *
  */
+/*
+ * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
+ */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+//! Configuration of the ILI9225 LCD display driver
 
-#define CONF_BOARD_AAT3193
-#define CONF_BOARD_ILI9225
+#ifndef CONF_ILI9225_H_INCLUDED
+#define CONF_ILI9225_H_INCLUDED
 
-/** Enable Com Port. */
-#define CONF_BOARD_UART_CONSOLE
+#include "board.h"
 
-/** Usart Hw ID used by the console (UART0). */
-#define CONSOLE_UART_ID          ID_UART0
+#if !defined(BOARD_ILI9225_SPI)      || \
+	!defined(BOARD_ILI9225_SPI_IRQN) || \
+	!defined(BOARD_ILI9225_SPI_NPCS) || \
+	!defined(BOARD_ILI9225_RS_GPIO)  || \
+	!defined(BOARD_ILI9225_RSTN_GPIO)
 
-#define LED0 LED0_GPIO
+	#warning The ILI9225 PIN configuration does not exist in the board definition file. Using default settings.
 
-#endif /* CONF_BOARD_H_INCLUDED */
+	#define BOARD_ILI9225_SPI         0 /* SPI instance, which can be SPI, SPI0 or SPI1, depends on which SPI channel is used by ILI9225 */
+	#define BOARD_ILI9225_SPI_IRQN    0 /* SPI interrupt number, which can be SPI_IRQn, SPI0_IRQn or SPI1_IRQn, depends on which SPI channel is used by ILI9225 */
+	#define BOARD_ILI9225_SPI_NPCS    2 /* SPI chip select number, depends on which SPI CS pin is used */
+	#define BOARD_ILI9225_RS_GPIO     PIO_PA28_IDX /* PIN index, depends on which pin is connnected with RS of ILI9225 */
+	#define BOARD_ILI9225_RSTN_GPIO   PIO_PA29_IDX /* PIN index, depends on which pin is connnected with nRESET of ILI9225 */
+#endif
+
+#endif /* CONF_ILI9225_H_INCLUDED */

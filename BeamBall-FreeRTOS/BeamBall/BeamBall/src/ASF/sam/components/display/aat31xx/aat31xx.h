@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief Board configuration.
+ * \brief API driver for component aat31xx.
  *
  * Copyright (c) 2011-2015 Atmel Corporation. All rights reserved.
  *
@@ -40,19 +40,58 @@
  * \asf_license_stop
  *
  */
+/*
+ * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
+ */
 
-#ifndef CONF_BOARD_H_INCLUDED
-#define CONF_BOARD_H_INCLUDED
+#ifndef AAT31XX_H_INCLUDED
+#define AAT31XX_H_INCLUDED
 
-#define CONF_BOARD_AAT3193
-#define CONF_BOARD_ILI9225
+#include "compiler.h"
+#include "conf_board.h"
 
-/** Enable Com Port. */
-#define CONF_BOARD_UART_CONSOLE
+/// @cond 0
+/**INDENT-OFF**/
+#ifdef __cplusplus
+extern "C" {
+#endif
+/**INDENT-ON**/
+/// @endcond
 
-/** Usart Hw ID used by the console (UART0). */
-#define CONSOLE_UART_ID          ID_UART0
+/* The minimum, average and maximum brightness level values */
+#ifdef CONF_BOARD_AAT3155
+#define AAT31XX_MIN_BACKLIGHT_LEVEL           1
+#define AAT31XX_AVG_BACKLIGHT_LEVEL           8
+#define AAT31XX_MAX_BACKLIGHT_LEVEL           16
+#endif
+#ifdef CONF_BOARD_AAT3193
+#define AAT31XX_MIN_BACKLIGHT_LEVEL           1
+#define AAT31XX_AVG_BACKLIGHT_LEVEL           8
+#define AAT31XX_MAX_BACKLIGHT_LEVEL           16
+#endif
+#ifdef CONF_BOARD_AAT3194
+#define AAT31XX_MIN_BACKLIGHT_LEVEL           1
+#define AAT31XX_AVG_BACKLIGHT_LEVEL           25
+#define AAT31XX_MAX_BACKLIGHT_LEVEL           32
+#endif
 
-#define LED0 LED0_GPIO
+/* No component found */
+#ifndef AAT31XX_MIN_BACKLIGHT_LEVEL
+#warning Cannot configure AAT31XX. The component must be declared in conf_board.h first!
+#define AAT31XX_MIN_BACKLIGHT_LEVEL           0
+#define AAT31XX_AVG_BACKLIGHT_LEVEL           0
+#define AAT31XX_MAX_BACKLIGHT_LEVEL           0
+#endif
 
-#endif /* CONF_BOARD_H_INCLUDED */
+void aat31xx_set_backlight(uint32_t ul_level);
+void aat31xx_disable_backlight(void);
+
+/// @cond 0
+/**INDENT-OFF**/
+#ifdef __cplusplus
+}
+#endif
+/**INDENT-ON**/
+/// @endcond
+
+#endif /* AAT31XX_H_INCLUDED */
