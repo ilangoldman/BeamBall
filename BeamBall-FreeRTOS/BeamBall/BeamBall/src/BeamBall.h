@@ -16,14 +16,15 @@
 #define ID_TC		ID_TC0
 #define TC_IRQn     TC0_IRQn
 
-#define PWM_FREQUENCY      20000
+#define PWM_FREQUENCY      50
 #define PERIOD_VALUE       100
 #define INIT_DUTY_VALUE    0
 
 pwm_channel_t g_pwm_channel_led;
 struct ili9225_opt_t g_ili9225_display_opt;
 
-
+#define PIO_ECHO PIO_PA15
+#define PIO_TRIGGER LED0_GPIO
 
 /* End Defines */
 

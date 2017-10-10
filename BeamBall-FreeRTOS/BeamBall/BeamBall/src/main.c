@@ -93,15 +93,16 @@
 #include "conf_board.h"
 #include <BeamBall.h>
 
+
 #define TASK_MONITOR_STACK_SIZE            (2048/sizeof(portSTACK_TYPE))
 #define TASK_MONITOR_STACK_PRIORITY        (tskIDLE_PRIORITY)
 #define TASK_LED_STACK_SIZE                (1024/sizeof(portSTACK_TYPE))
 #define TASK_LED_STACK_PRIORITY            (tskIDLE_PRIORITY)
 
 #define TASK_STACK_SIZE						(1024/sizeof(portSTACK_TYPE))
-#define TASK_SENSOR_PRIORITY				(tskIDLE_PRIORITY)
-#define TASK_MOTOR_PRIORITY					(tskIDLE_PRIORITY)
-#define TASK_CONTROL_PRIORITY				(tskIDLE_PRIORITY)
+#define TASK_SENSOR_PRIORITY				(1)
+#define TASK_MOTOR_PRIORITY					(1)
+#define TASK_CONTROL_PRIORITY				(1)
 
 extern void vApplicationStackOverflowHook(xTaskHandle *pxTask,
 		signed char *pcTaskName);
@@ -210,60 +211,157 @@ static void task_led(void *pvParameters)
 	}
 }
 
+
+/* Beam Ball Start */
+
 // ?? - o build nao deixa colocar as variaveis em um arquivo .h
 // aparece erro de multiple define ou first time undefined
+
+//xTaskHandle *pxTaskSensor = NULL;
+//xTaskHandle *pxTaskControle = NULL;
+//xTaskHandle *pxTaskMotor = NULL;
+
 xQueueHandle xQueueSensor = NULL;
+xQueueHandle xQueueControle = NULL;
+xQueueHandle xQueueMotor = NULL;
+
 uint32_t sensor_counter = 0;
-
-#define PIO_TRIGGER LED1_GPIO
-
-// ?? - nao ta funcionando, como debuggar isso sem display?
-static void vTaskReadSensor(void *pvParameters)
-{
-	UNUSED(pvParameters);
-	int counter = 0;
-	int distanceCM = 0;
-	for (;;) {
-		sensor_counter = 0;
-		gpio_pin_is_high(PIO_TRIGGER);
-		// vTaskDelay(1us); // implement taskDelay as a for loop
-		delay_us(10);
-		gpio_pin_is_low(PIO_TRIGGER);
-		
-		// read from queue ISR
-		//if (xQueueReceiveFromISR(&xQueueSensor,&counter,NULL) != pdPASS)
-			//printf("Error Receiving data from xQueueSensor\n");
-		//
-		//distanceCM = counter/58;
-		
-		// 		if (xQueueSend(xQueueControle,&distanceCM,2) != pdPASS)
-		// 			printf("Error Sending data to xQueueControle\n");
-		
-		//vTaskDelay(1);
-		// go for a new read
-	}
-}
-
 void vSensorISR(const uint32_t id, const uint32_t index) {
 	// write in queue sensorISR
-	gpio_toggle_pin(LED1_GPIO);
-	//if (xQueueSendFromISR(xQueueSensor,&sensor_counter,NULL) != pdPASS)
-	//printf("Error Sending data to xQueueSensor\n");
-}
+	// int sensor_counter = timer_value_RC;
+	printf("Entrei ISR \r\n");
 
-#define PIO_ECHO PIO_PA15
+	sensor_counter += 10;
+	gpio_toggle_pin(LED1_GPIO);
+	if (xQueueSendFromISR(xQueueSensor,&sensor_counter,NULL) != pdPASS)
+	printf("Error Sending data to xQueueSensor\r\n");
+
+	printf("Terminei ISR \r\n");
+}
 
 void vConfigureSensorISR() {
 	// configure sensor interrupt
-	printf("Configuracao Sensor ISR \n");
+	printf("Configuracao Sensor ISR \r\n");
 	
 	// pio no btn BP2 (LEFT) trocar para outro PIO
 	
-	pio_set_input(PIOA, PIO_ECHO, PIO_PULLUP | PIO_DEBOUNCE);
+	pio_set_input(PIOA, PIO_ECHO, PIO_PULLUP | PIO_DEBOUNCE); // pull down
 	pio_handler_set(PIOA,ID_PIOA,PIO_ECHO,PIO_IT_RISE_EDGE,vSensorISR);
 	pio_enable_interrupt(PIOA,PIO_ECHO);
 	NVIC_SetPriority(PIOA_IRQn, 1 );
 	NVIC_EnableIRQ(PIOA_IRQn);
+
+	printf("Terminei Config Sensor ISR \r\n");
+}
+
+static void vTaskReadSensor(void *pvParameters)
+{
+	UNUSED(pvParameters);
+	uint32_t counter = 0;
+	int distanceCM = 0;
+	char buffer[50];
+
+	for (;;) {
+		//sensor_counter = 0;
+		// zerar timer tc
+		
+		gpio_pin_is_high(PIO_TRIGGER);
+		delay_us(10);
+		gpio_pin_is_low(PIO_TRIGGER);
+
+		// read from queue ISR
+		if (xQueueReceive(xQueueSensor,&counter,portMAX_DELAY) != pdPASS)
+			printf("Error Receiving data from xQueueSensor\r\n");
+
+		// print no LCD
+		ili9225_set_foreground_color(COLOR_WHITE);
+		ili9225_draw_filled_rectangle(0, 30, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+		ili9225_set_foreground_color(COLOR_BLUE);
+		ili9225_draw_string(10,35,(uint8_t *) "C: ");
+
+		int n = sprintf (buffer, "%d", counter);
+		ili9225_draw_string(95,35,(uint8_t *) buffer);
+
+		distanceCM = counter/58;
+
+		ili9225_set_foreground_color(COLOR_WHITE);
+		ili9225_draw_filled_rectangle(0, 50, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+		ili9225_set_foreground_color(COLOR_BLUE);
+		ili9225_draw_string(10,55,(uint8_t *) "D: ");
+
+		n = sprintf (buffer, "%d", distanceCM);
+		ili9225_draw_string(95,55,(uint8_t *) buffer);
+		
+		if (xQueueSend(xQueueControle,&distanceCM,portMAX_DELAY) != pdPASS)
+	 		printf("Error Sending data to xQueueControle\n");
+	
+		taskYIELD();
+	}
+}
+
+/* Start Malha de Controle Functions */
+
+void vTaskMalhaControle(void *pvParameters)
+{
+	UNUSED(pvParameters);
+	int sensorDistance = 0;
+	double motorPos = 0;
+	char buffer[50];
+	int n;
+
+	for (;;) {
+		// read from sensor queue distanceCM
+		if (xQueueReceive(xQueueControle,&sensorDistance,portMAX_DELAY) != pdPASS)
+			printf("Error Receiving data from xQueueSensor\n");
+		
+		ili9225_set_foreground_color(COLOR_WHITE);
+		ili9225_draw_filled_rectangle(0, 70, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+		ili9225_set_foreground_color(COLOR_BLUE);
+		ili9225_draw_string(10,75,(uint8_t *) "SD: ");
+
+		n = sprintf (buffer, "%d", sensorDistance);
+		ili9225_draw_string(95,75,(uint8_t *) buffer);
+
+		// do some control shit!
+		motorPos = sensorDistance * 2;
+
+		ili9225_set_foreground_color(COLOR_WHITE);
+		ili9225_draw_filled_rectangle(0, 90, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+		ili9225_set_foreground_color(COLOR_BLUE);
+		ili9225_draw_string(10,95,(uint8_t *) "MP: ");
+
+		n = sprintf (buffer, "%d", motorPos);
+		ili9225_draw_string(95,95,(uint8_t *) buffer);
+
+		// writes to queue Motor Position
+		if (xQueueSend(xQueueMotor,&motorPos,portMAX_DELAY) != pdPASS)
+			printf("Error Sending data to xQueueMotor\n");
+	}
+}
+
+/* End Malha de Controle Functions */
+
+void vTaskRunMotor(void *pvParameters)
+{
+	UNUSED(pvParameters);
+	double pos = 0;
+	char buffer[50];
+
+	for (;;) {
+		// read from queue Malha de Controle Motor Pos
+		if (xQueueReceive(xQueueMotor,&pos,portMAX_DELAY) != pdPASS)
+			printf("Error Receiving data from xQueueMotor\n");
+		
+		ili9225_set_foreground_color(COLOR_WHITE);
+		ili9225_draw_filled_rectangle(0, 110, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+		ili9225_set_foreground_color(COLOR_BLUE);
+		ili9225_draw_string(10,115,(uint8_t *) "P: ");
+
+		int n = sprintf (buffer, "%d", pos);
+		ili9225_draw_string(95,115,(uint8_t *) buffer);
+
+		//vPWMUpdateDuty(pos);
+	}
 }
 
 /**
@@ -277,8 +375,13 @@ int main(void)
 	sysclk_init();
 	board_init();
 	vConfigureUart();
-	vConfigureLCD();
-	drawLCD();
+
+	/* Create Queues */
+	xQueueSensor = xQueueCreate(5,sizeof (uint32_t));
+	xQueueControle = xQueueCreate(5,sizeof (int));
+	xQueueMotor = xQueueCreate(5,sizeof(double));
+
+	printf("Queue Done!\r\n");
 	
 	// ?? - funciona, mas da conflito com o LCD
 	//vConfigurePWM();
@@ -287,9 +390,10 @@ int main(void)
 	//vConfigureTimer();
 	
 	// ?? - Funcionando, mas perde a funcionalidade do LCD
-	//vConfigureSensorISR();
-	
-	
+	vConfigureSensorISR();
+	vConfigureLCD();
+	drawLCD();
+
 	ili9225_set_foreground_color(COLOR_WHITE);
 	ili9225_draw_filled_rectangle(0, 30, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
 	ili9225_set_foreground_color(COLOR_BLUE);
@@ -300,17 +404,8 @@ int main(void)
 	printf("-- %s\n\r", BOARD_NAME);
 	printf("-- Compiled: %s %s --\n\r", __DATE__, __TIME__);
 	
-	
-	/* Create Queues */
-	xQueueSensor = xQueueCreate(2,sizeof (int));
-	//xQueueControle = xQueueCreate(2,sizeof (int));
-	//xQueueMotor = xQueueCreate(2,sizeof(double));
-	
-	ili9225_set_foreground_color(COLOR_WHITE);
-	ili9225_draw_filled_rectangle(0, 50, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
-	ili9225_set_foreground_color(COLOR_BLUE);
-	ili9225_draw_string(10,55,(uint8_t *)"Queue DONE!");
-	
+	//xPortGetFreeHeapSize();
+
 	/* Create task to monitor processor activity */
 	if (xTaskCreate(task_monitor, "Monitor", TASK_MONITOR_STACK_SIZE, NULL,
 			TASK_MONITOR_STACK_PRIORITY, NULL) != pdPASS) {
@@ -324,25 +419,24 @@ int main(void)
 	}
 	
 	/* Create task to read sensor */
-	if (xTaskCreate(vTaskReadSensor, "Read Sensor", TASK_STACK_SIZE, NULL,
+	if (xTaskCreate(vTaskReadSensor, "Read Sensor", TASK_STACK_SIZE * 3, NULL,
 			TASK_SENSOR_PRIORITY, /*pxTaskSensor*/ NULL) != pdPASS) {
 		printf("Failed to create Read Sensor task\r\n");
-		gpio_toggle_pin(LED1_GPIO); // ??
 	}
 	
 	/* Create task to calculate the control */
-	//if (xTaskCreate(vTaskMalhaControle, "Malha de Controle", TASK_STACK_SIZE, NULL,
-	//TASK_CONTROL_PRIORITY, pxTaskControle) != pdPASS) {
-	//printf("Failed to create Malha de Controle task\r\n");
-	//}
+	if (xTaskCreate(vTaskMalhaControle, "Malha de Controle", TASK_STACK_SIZE * 3, NULL,
+		TASK_CONTROL_PRIORITY, /*pxTaskControle*/ NULL) != pdPASS) {
+		printf("Failed to create Malha de Controle task\r\n");
+	}
 	
 	/* Create task to change motor position */
-	//if (xTaskCreate(vTaskRunMotor, "Run Motor", TASK_STACK_SIZE, NULL,
-			//TASK_MOTOR_PRIORITY, pxTaskMotor) != pdPASS) {
-		//printf("Failed to create Run Motor task\r\n");
-	//}
+	if (xTaskCreate(vTaskRunMotor, "Run Motor", TASK_STACK_SIZE * 3, NULL,
+		TASK_MOTOR_PRIORITY, /*pxTaskMotor*/ NULL) != pdPASS) {
+		printf("Failed to create Run Motor task\r\n");
+	}
 	
-	
+	//xPortGetFreeHeapSize();
 	
 	ili9225_set_foreground_color(COLOR_WHITE);
 	ili9225_draw_filled_rectangle(0, 70, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
