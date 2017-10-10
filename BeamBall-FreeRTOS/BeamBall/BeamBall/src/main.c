@@ -231,7 +231,16 @@ void vSensorISR(const uint32_t id, const uint32_t index) {
 	// int sensor_counter = timer_value_RC;
 	printf("Entrei ISR \r\n");
 
-	sensor_counter += 10;
+	//sensor_counter += 58;
+	sensor_counter = tc_read_cv(TC,CHANNEL);
+	char buffer[50];
+	ili9225_set_foreground_color(COLOR_WHITE);
+	ili9225_draw_filled_rectangle(0, 30, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+	ili9225_set_foreground_color(COLOR_BLUE);
+	ili9225_draw_string(10,35,(uint8_t *) "C: ");
+	int n = sprintf (buffer, "%d", sensor_counter);
+	ili9225_draw_string(95,35,(uint8_t *) buffer);
+	
 	gpio_toggle_pin(LED1_GPIO);
 	if (xQueueSendFromISR(xQueueSensor,&sensor_counter,NULL) != pdPASS)
 	printf("Error Sending data to xQueueSensor\r\n");
@@ -245,7 +254,8 @@ void vConfigureSensorISR() {
 	
 	// pio no btn BP2 (LEFT) trocar para outro PIO
 	
-	pio_set_input(PIOA, PIO_ECHO, PIO_PULLUP | PIO_DEBOUNCE); // pull down
+	pio_set_input(PIOA, PIO_ECHO,PIO_PULLUP | PIO_DEBOUNCE); // pull down
+	//pio_pull_down(PIOA,PIO_ECHO,1);
 	pio_handler_set(PIOA,ID_PIOA,PIO_ECHO,PIO_IT_RISE_EDGE,vSensorISR);
 	pio_enable_interrupt(PIOA,PIO_ECHO);
 	NVIC_SetPriority(PIOA_IRQn, 1 );
@@ -258,13 +268,13 @@ static void vTaskReadSensor(void *pvParameters)
 {
 	UNUSED(pvParameters);
 	uint32_t counter = 0;
-	int distanceCM = 0;
+	double distanceCM = 0;
 	char buffer[50];
 
 	for (;;) {
 		//sensor_counter = 0;
 		// zerar timer tc
-		
+		tc_get_status(TC,CHANNEL);
 		gpio_pin_is_high(PIO_TRIGGER);
 		delay_us(10);
 		gpio_pin_is_low(PIO_TRIGGER);
@@ -289,7 +299,7 @@ static void vTaskReadSensor(void *pvParameters)
 		ili9225_set_foreground_color(COLOR_BLUE);
 		ili9225_draw_string(10,55,(uint8_t *) "D: ");
 
-		n = sprintf (buffer, "%d", distanceCM);
+		n = sprintf (buffer, "%.2f", distanceCM);
 		ili9225_draw_string(95,55,(uint8_t *) buffer);
 		
 		if (xQueueSend(xQueueControle,&distanceCM,portMAX_DELAY) != pdPASS)
@@ -304,7 +314,7 @@ static void vTaskReadSensor(void *pvParameters)
 void vTaskMalhaControle(void *pvParameters)
 {
 	UNUSED(pvParameters);
-	int sensorDistance = 0;
+	double sensorDistance = 0;
 	double motorPos = 0;
 	char buffer[50];
 	int n;
@@ -319,7 +329,7 @@ void vTaskMalhaControle(void *pvParameters)
 		ili9225_set_foreground_color(COLOR_BLUE);
 		ili9225_draw_string(10,75,(uint8_t *) "SD: ");
 
-		n = sprintf (buffer, "%d", sensorDistance);
+		n = sprintf (buffer, "%.2f", sensorDistance);
 		ili9225_draw_string(95,75,(uint8_t *) buffer);
 
 		// do some control shit!
@@ -330,7 +340,7 @@ void vTaskMalhaControle(void *pvParameters)
 		ili9225_set_foreground_color(COLOR_BLUE);
 		ili9225_draw_string(10,95,(uint8_t *) "MP: ");
 
-		n = sprintf (buffer, "%d", motorPos);
+		n = sprintf (buffer, "%.2f", motorPos);
 		ili9225_draw_string(95,95,(uint8_t *) buffer);
 
 		// writes to queue Motor Position
@@ -357,7 +367,7 @@ void vTaskRunMotor(void *pvParameters)
 		ili9225_set_foreground_color(COLOR_BLUE);
 		ili9225_draw_string(10,115,(uint8_t *) "P: ");
 
-		int n = sprintf (buffer, "%d", pos);
+		int n = sprintf (buffer, "%.2f", pos);
 		ili9225_draw_string(95,115,(uint8_t *) buffer);
 
 		//vPWMUpdateDuty(pos);
@@ -378,7 +388,7 @@ int main(void)
 
 	/* Create Queues */
 	xQueueSensor = xQueueCreate(5,sizeof (uint32_t));
-	xQueueControle = xQueueCreate(5,sizeof (int));
+	xQueueControle = xQueueCreate(5,sizeof (double));
 	xQueueMotor = xQueueCreate(5,sizeof(double));
 
 	printf("Queue Done!\r\n");

@@ -62,13 +62,13 @@ void drawLCD(void) {
 /* Start Sensor Functions */
 
 
-//void TC0_Handler(void) {
-	//tc_get_status(TC,CHANNEL);
-//
-	////sensor_counter++;
-	//
-	///** Muda o estado do LED 1*/
-	//gpio_toggle_pin(LED1_GPIO);
+void TC0_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+
+	//sensor_counter++;
+	
+	/** Muda o estado do LED 1*/
+	gpio_toggle_pin(LED1_GPIO);
 	//
 	//ili9225_set_foreground_color(COLOR_WHITE);
 	//ili9225_draw_filled_rectangle(0, 160, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
@@ -77,8 +77,9 @@ void drawLCD(void) {
 	//char buffer[50];
 	////int n = sprintf (buffer, "%d", sensor_counter);
 	//
-	//ili9225_draw_string(10,165,(uint8_t *) buffer);
-//}
+	//ili9225_draw_string(10,165,(uint8_t *) "RC estourou");
+	printf("RC estourou/r/n");
+}
 
 void vConfigureTimer() {
 	// t = 10us (fs = 100000)
@@ -93,14 +94,17 @@ void vConfigureTimer() {
 	// trocar para ser a cada 10uS
 	tc_find_mck_divisor(freq_desired,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
 	tc_init(TC,CHANNEL,TC_CMR_CPCTRG|ul_tcclk);
-	uint32_t counter = (ul_sysclk/ul_div)/freq_desired;
-    tc_write_rc(TC,CHANNEL,counter);
+	uint32_t RC = (ul_sysclk/ul_div)/freq_desired;
+    tc_write_rc(TC,CHANNEL,RC);
 	
 	/********************************************************
 	 *	        TC_IER_CPCS  : 	RC Compare					*
 	 ********************************************************/
-	//tc_enable_interrupt(TC,CHANNEL,TC_IER_CPCS);
-	//NVIC_EnableIRQ(TC_IRQn);
+	tc_enable_interrupt(TC,CHANNEL,TC_IER_CPCS);
+	NVIC_EnableIRQ(TC_IRQn);
+	
+	
+	
     tc_start(TC,CHANNEL);
 	printf("timer configurado\r");
 }
