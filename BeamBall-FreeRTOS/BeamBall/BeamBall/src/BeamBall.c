@@ -114,7 +114,7 @@ void vConfigureTimer() {
 
 void vConfigurePWM() {
 	pmc_enable_periph_clk(ID_PWM);
-	pwm_channel_disable(PWM, PWM_CHANNEL_0);
+	pwm_channel_disable(PWM, PWM_CHANNEL);
 	pwm_clock_t clock_setting = {
 		.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
 		.ul_clkb = 0,
@@ -122,17 +122,29 @@ void vConfigurePWM() {
 	};
 
 	pwm_init(PWM, &clock_setting);
+
+	/* Initialize PWM channel for LED0 */
+	/* Period is left-aligned */
+	g_pwm_channel_led.alignment = PWM_ALIGN_LEFT;
+	/* Output waveform starts at a low level */
+	g_pwm_channel_led.polarity = PWM_LOW;
+	/* Use PWM clock A as source clock */
 	g_pwm_channel_led.ul_prescaler = PWM_CMR_CPRE_CLKA;
+	/* Period value of output waveform */
 	g_pwm_channel_led.ul_period = PERIOD_VALUE;
-	g_pwm_channel_led.ul_duty = 50;
-	g_pwm_channel_led.channel = PWM_CHANNEL_0;
+	/* Duty cycle value of output waveform */
+	g_pwm_channel_led.ul_duty = INIT_DUTY_VALUE;
+	g_pwm_channel_led.channel = PWM_CHANNEL;
+
 	pwm_channel_init(PWM, &g_pwm_channel_led);
-	pwm_channel_enable(PWM, PWM_CHANNEL_0);
+
+	pwm_channel_enable(PWM, PWM_CHANNEL);
 }
 
 void vPWMUpdateDuty (double duty) {
-	g_pwm_channel_led.channel = PIN_PWM_LED0_CHANNEL;
+	g_pwm_channel_led.channel = PWM_CHANNEL;
 	pwm_channel_update_duty(PWM, &g_pwm_channel_led, duty);
+	//gpio_toggle_pin(LED0_GPIO);
 }
 
 

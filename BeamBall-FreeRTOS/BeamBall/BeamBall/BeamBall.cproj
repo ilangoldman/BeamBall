@@ -35,12 +35,13 @@
     <option id="common.services.basic.gpio" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.utils.stdio.stdio_serial" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.components.display.aat31xx" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.components.display.ili9225" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.pio" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.pwm" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.drivers.tc" value="Add" config="" content-id="Atmel.ASF" />
     <option id="thirdparty.os.freertos.version" value="Add" config="7.0.0" content-id="Atmel.ASF" />
-    <option id="sam.components.display.aat31xx" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="sam.drivers.pmc" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.freertos.sam_example" value="Add" config="" content-id="Atmel.ASF" />
     <option id="sam.utils.cmsis.sam3n.source.template" value="Add" config="" content-id="Atmel.ASF" />
   </options>

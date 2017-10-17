@@ -214,9 +214,6 @@ static void task_led(void *pvParameters)
 
 /* Beam Ball Start */
 
-// ?? - o build nao deixa colocar as variaveis em um arquivo .h
-// aparece erro de multiple define ou first time undefined
-
 //xTaskHandle *pxTaskSensor = NULL;
 //xTaskHandle *pxTaskControle = NULL;
 //xTaskHandle *pxTaskMotor = NULL;
@@ -231,19 +228,20 @@ void vSensorISR(const uint32_t id, const uint32_t index) {
 	// int sensor_counter = timer_value_RC;
 	printf("Entrei ISR \r\n");
 
-	//sensor_counter += 58;
-	sensor_counter = tc_read_cv(TC,CHANNEL);
-	char buffer[50];
-	ili9225_set_foreground_color(COLOR_WHITE);
-	ili9225_draw_filled_rectangle(0, 30, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
-	ili9225_set_foreground_color(COLOR_BLUE);
-	ili9225_draw_string(10,35,(uint8_t *) "C: ");
-	int n = sprintf (buffer, "%d", sensor_counter);
-	ili9225_draw_string(95,35,(uint8_t *) buffer);
+	sensor_counter += 58;
+	//sensor_counter = tc_read_cv(TC,CHANNEL);
+
+	//char buffer[50];
+	//ili9225_set_foreground_color(COLOR_WHITE);
+	//ili9225_draw_filled_rectangle(0, 30, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+	//ili9225_set_foreground_color(COLOR_BLUE);
+	//ili9225_draw_string(10,35,(uint8_t *) "C: ");
+	//int n = sprintf (buffer, "%d", sensor_counter);
+	//ili9225_draw_string(95,35,(uint8_t *) buffer);
 	
 	gpio_toggle_pin(LED1_GPIO);
 	if (xQueueSendFromISR(xQueueSensor,&sensor_counter,NULL) != pdPASS)
-	printf("Error Sending data to xQueueSensor\r\n");
+		printf("Error Sending data to xQueueSensor\r\n");
 
 	printf("Terminei ISR \r\n");
 }
@@ -274,7 +272,7 @@ static void vTaskReadSensor(void *pvParameters)
 	for (;;) {
 		//sensor_counter = 0;
 		// zerar timer tc
-		tc_get_status(TC,CHANNEL);
+		//tc_get_status(TC,CHANNEL);
 		gpio_pin_is_high(PIO_TRIGGER);
 		delay_us(10);
 		gpio_pin_is_low(PIO_TRIGGER);
@@ -317,8 +315,8 @@ void vTaskMalhaControle(void *pvParameters)
 	double sensorDistance = 0;
 	double motorPos = 0;
 	char buffer[50];
-	int n;
-
+	int n,i;
+	i = 0;
 	for (;;) {
 		// read from sensor queue distanceCM
 		if (xQueueReceive(xQueueControle,&sensorDistance,portMAX_DELAY) != pdPASS)
@@ -333,7 +331,9 @@ void vTaskMalhaControle(void *pvParameters)
 		ili9225_draw_string(95,75,(uint8_t *) buffer);
 
 		// do some control shit!
-		motorPos = sensorDistance * 2;
+		double sd = sensorDistance*10;
+		motorPos = (sd < 100) ? sd : sd-10*i;
+		i++;
 
 		ili9225_set_foreground_color(COLOR_WHITE);
 		ili9225_draw_filled_rectangle(0, 90, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
@@ -370,7 +370,7 @@ void vTaskRunMotor(void *pvParameters)
 		int n = sprintf (buffer, "%.2f", pos);
 		ili9225_draw_string(95,115,(uint8_t *) buffer);
 
-		//vPWMUpdateDuty(pos);
+		vPWMUpdateDuty(pos);
 	}
 }
 
@@ -394,13 +394,14 @@ int main(void)
 	printf("Queue Done!\r\n");
 	
 	// ?? - funciona, mas da conflito com o LCD
-	//vConfigurePWM();
+	vConfigurePWM();
 	
 	// ?? - funcionando, mas a frequencia é tao rapida q nunca sai desse ponto do codigo
 	//vConfigureTimer();
 	
 	// ?? - Funcionando, mas perde a funcionalidade do LCD
 	vConfigureSensorISR();
+
 	vConfigureLCD();
 	drawLCD();
 
@@ -423,10 +424,10 @@ int main(void)
 	}
 
 	/* Create task to make led blink */
-	if (xTaskCreate(task_led, "Led", TASK_LED_STACK_SIZE, NULL,
+	/*if (xTaskCreate(task_led, "Led", TASK_LED_STACK_SIZE, NULL,
 			TASK_LED_STACK_PRIORITY, NULL) != pdPASS) {
 		printf("Failed to create test led task\r\n");
-	}
+	}*/
 	
 	/* Create task to read sensor */
 	if (xTaskCreate(vTaskReadSensor, "Read Sensor", TASK_STACK_SIZE * 3, NULL,

@@ -16,6 +16,7 @@
 #define ID_TC		ID_TC0
 #define TC_IRQn     TC0_IRQn
 
+#define PWM_CHANNEL		   PWM_CHANNEL_0
 #define PWM_FREQUENCY      50
 #define PERIOD_VALUE       100
 #define INIT_DUTY_VALUE    0
