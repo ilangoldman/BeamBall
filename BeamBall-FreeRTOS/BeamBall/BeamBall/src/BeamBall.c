@@ -127,7 +127,7 @@ void vConfigurePWM() {
 	/* Period is left-aligned */
 	g_pwm_channel_led.alignment = PWM_ALIGN_LEFT;
 	/* Output waveform starts at a low level */
-	g_pwm_channel_led.polarity = PWM_LOW;
+	g_pwm_channel_led.polarity = PWM_HIGH;
 	/* Use PWM clock A as source clock */
 	g_pwm_channel_led.ul_prescaler = PWM_CMR_CPRE_CLKA;
 	/* Period value of output waveform */
@@ -137,9 +137,20 @@ void vConfigurePWM() {
 	g_pwm_channel_led.channel = PWM_CHANNEL;
 
 	pwm_channel_init(PWM, &g_pwm_channel_led);
+// 	pwm_channel_enable_interrupt(PWM, PWM_CHANNEL, 0);
+// 
+// 	NVIC_DisableIRQ(PWM_IRQn);
+// 	NVIC_ClearPendingIRQ(PWM_IRQn);
+// 	NVIC_SetPriority(PWM_IRQn, 0);
+// 	NVIC_EnableIRQ(PWM_IRQn);
 
 	pwm_channel_enable(PWM, PWM_CHANNEL);
 }
+
+// void PWM_Handler(void) {
+// 	gpio_toggle_pin(LED0_GPIO);
+// 	vPWMUpdateDuty(6);
+// }
 
 void vPWMUpdateDuty (double duty) {
 	g_pwm_channel_led.channel = PWM_CHANNEL;

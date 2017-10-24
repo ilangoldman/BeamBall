@@ -331,8 +331,8 @@ void vTaskMalhaControle(void *pvParameters)
 		ili9225_draw_string(95,75,(uint8_t *) buffer);
 
 		// do some control shit!
-		double sd = sensorDistance*10;
-		motorPos = (sd < 100) ? sd : sd-10*i;
+		//double sd = sensorDistance;
+		motorPos = sensorDistance;
 		i++;
 
 		ili9225_set_foreground_color(COLOR_WHITE);
@@ -404,7 +404,7 @@ int main(void)
 
 	vConfigureLCD();
 	drawLCD();
-
+	
 	ili9225_set_foreground_color(COLOR_WHITE);
 	ili9225_draw_filled_rectangle(0, 30, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
 	ili9225_set_foreground_color(COLOR_BLUE);

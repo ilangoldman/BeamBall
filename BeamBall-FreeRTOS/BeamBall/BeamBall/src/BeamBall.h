@@ -19,7 +19,7 @@
 #define PWM_CHANNEL		   PWM_CHANNEL_0
 #define PWM_FREQUENCY      50
 #define PERIOD_VALUE       100
-#define INIT_DUTY_VALUE    0
+#define INIT_DUTY_VALUE    5
 
 pwm_channel_t g_pwm_channel_led;
 struct ili9225_opt_t g_ili9225_display_opt;
