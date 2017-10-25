@@ -51,9 +51,9 @@ void vConfigureUART(void) {
 
 /* LCD Configuration */
 
-void SPI_Handler(void) {
+/*void SPI_Handler(void) {
 	ili9225_spi_handler();
-}
+}*/
 
 void vConfigureLCD(void) {
 	/* Initialize display parameter */
@@ -88,12 +88,12 @@ void drawLCD(void) {
 	//ili9225_draw_line(0, 11, ILI9225_LCD_WIDTH, 12);
 
 	/* Draw three circle with red, green and blue color */
-	ili9225_set_foreground_color(COLOR_RED);
+	/*ili9225_set_foreground_color(COLOR_RED);
 	ili9225_draw_circle(60, 80, 30);
 	ili9225_set_foreground_color(COLOR_GREEN);
 	ili9225_draw_circle(60, 120, 30);
 	ili9225_set_foreground_color(COLOR_BLUE);
-	ili9225_draw_circle(60, 160, 30);
+	ili9225_draw_circle(60, 160, 30);*/
 
 }
 
@@ -116,16 +116,16 @@ void TC1_Handler(void) {
 	
 	// Descomente as linhas de baixo para ver o contador no LCD
 	
-	//ili9225_set_foreground_color(COLOR_WHITE);
-	//ili9225_draw_filled_rectangle(0, 160, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
-	//ili9225_set_foreground_color(COLOR_BLUE);
-	//
-	//char buffer[50];
-	////int n = sprintf (buffer, "%d", iGetSensorCounter());
-	//
-	//ili9225_draw_string(10,165,(uint8_t *) "RC estourou");
+	/*ili9225_set_foreground_color(COLOR_WHITE);
+	ili9225_draw_filled_rectangle(0, 160, ILI9225_LCD_WIDTH, ILI9225_LCD_HEIGHT);
+	ili9225_set_foreground_color(COLOR_BLUE);
 	
-	puts("Contando\r\n");
+	char buffer[50];
+	int n = sprintf (buffer, "%d", iGetSensorCounter());
+	
+	ili9225_draw_string(10,165,(uint8_t *) "RC estourou");
+	
+	puts("Contando\r\n");*/
 }
 
 void vConfigureTimer() {
@@ -211,28 +211,34 @@ void vSensorISR(const uint32_t id, const uint32_t index) {
 	puts("Fim Sensor ISR \r\n");
 }
 
-uint32_t btn_duty = MIN_DUTY_VALUE;
 
 // Alteram o PWM diretamente
+uint32_t btn_duty = MIN_DUTY_VALUE;
+
 void vButtonLeftISR(const uint32_t id, const uint32_t index) {
 	// aumenta o duty
+	
 	if (btn_duty < MAX_DUTY_VALUE) btn_duty++;
 	vPWMUpdateDuty(btn_duty);
 	
 	puts("Fim Button Left ISR \r\n");
+	printf("Duty atual: %d\a\n\r",btn_duty);
 }
 
 void vButtonRightISR(const uint32_t id, const uint32_t index) {
 	// diminui o duty
+	
 	if (btn_duty > MIN_DUTY_VALUE) btn_duty--;
 	vPWMUpdateDuty(btn_duty);
 	
 	puts("Fim Button Right ISR \r\n");
+	printf("Duty atual: %d\a\n\r",btn_duty);
 }
 
 /* PWM Configuration */
 
 void vConfigurePWM() {
+	
 	pmc_enable_periph_clk(ID_PWM);
 	pwm_channel_disable(PWM, PWM_CHANNEL);
 	pwm_clock_t clock_setting = {
@@ -242,7 +248,7 @@ void vConfigurePWM() {
 	};
 
 	pwm_init(PWM, &clock_setting);
-
+	
 	/* Initialize PWM channel for LED0 */
 	/* Period is left-aligned */
 	g_pwm_channel_led.alignment = PWM_ALIGN_LEFT;
@@ -253,20 +259,21 @@ void vConfigurePWM() {
 	/* Period value of output waveform */
 	g_pwm_channel_led.ul_period = PERIOD_VALUE;
 	/* Duty cycle value of output waveform */
-	g_pwm_channel_led.ul_duty = MIN_DUTY_VALUE;
+	g_pwm_channel_led.ul_duty = 50;
 	g_pwm_channel_led.channel = PWM_CHANNEL;
 
 	pwm_channel_init(PWM, &g_pwm_channel_led);
+
 	
-	// Descomente as linhas de baixo para colocar a interrupcao no PWM
-	/*
-	pwm_channel_enable_interrupt(PWM, PWM_CHANNEL, 0);
-	
-	NVIC_DisableIRQ(PWM_IRQn);
-	NVIC_ClearPendingIRQ(PWM_IRQn);
-	NVIC_SetPriority(PWM_IRQn, PWM_PRIORITY);
-	NVIC_EnableIRQ(PWM_IRQn);
-	*/
+	 //Descomente as linhas de baixo para colocar a interrupcao no PWM
+	//
+	//pwm_channel_enable_interrupt(PWM, PWM_CHANNEL, 0);
+	//
+	//NVIC_DisableIRQ(PWM_IRQn);
+	//NVIC_ClearPendingIRQ(PWM_IRQn);
+	//NVIC_SetPriority(PWM_IRQn, PWM_PRIORITY);
+	//NVIC_EnableIRQ(PWM_IRQn);
+	//
 
 	pwm_channel_enable(PWM, PWM_CHANNEL);
 }
@@ -274,12 +281,31 @@ void vConfigurePWM() {
 void vPWMUpdateDuty (double duty) {
 	g_pwm_channel_led.channel = PWM_CHANNEL;
 	pwm_channel_update_duty(PWM, &g_pwm_channel_led, duty);
+	
+	
 }
 
 // Descomente a funcao de baixo para ativar a interrupcao do PWM
-/*
-void PWM_Handler(void) {
+
+/*void PWM_Handler(void) {
+	uint32_t events = pwm_channel_get_interrupt_status(PWM);
 	gpio_toggle_pin(LED0_GPIO);
 	vPWMUpdateDuty(6);
+}*/
+
+//Configurar botoes com interrupcoes
+void vConfigureButton(){
+	pio_set_input(PIOA,PIO_BUTTON_LEFT,PIO_PULLUP|PIO_DEBOUNCE);
+	pio_handler_set(PIOA,ID_PIOA,PIO_BUTTON_LEFT,PIO_IT_RISE_EDGE,vButtonLeftISR);
+	pio_enable_interrupt(PIOA,PIO_BUTTON_LEFT);
+	NVIC_SetPriority(PIOA_IRQn,BUTTON_PRIORITY);
+	
+
+	pio_set_input(PIOA,PIO_BUTTON_RIGTH,PIO_PULLUP|PIO_DEBOUNCE);
+	pio_handler_set(PIOA,ID_PIOA,PIO_BUTTON_RIGTH,PIO_IT_RISE_EDGE,vButtonRightISR);
+	pio_enable_interrupt(PIOA,PIO_BUTTON_RIGTH);
+	NVIC_SetPriority(PIOA_IRQn,BUTTON_PRIORITY);
+
+	NVIC_EnableIRQ(PIOA_IRQn);
+	puts("botoes configurados\n\r");
 }
-*/

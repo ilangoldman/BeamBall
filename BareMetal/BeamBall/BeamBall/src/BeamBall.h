@@ -51,6 +51,7 @@
 
 pwm_channel_t g_pwm_channel_led;
 
+
 /* LCD Display Defines */
 
 struct ili9225_opt_t g_ili9225_display_opt;
@@ -120,5 +121,8 @@ void vConfigureTimer(void);
 
 void vConfigurePWM(void);
 void vPWMUpdateDuty (double duty);
+
+/* Buttons Function */
+void vConfigureButton(void);
 
 #endif /* BEAMBALL_H_ */
