@@ -45,11 +45,12 @@
 
 #define PWM_CHANNEL			PWM_CHANNEL_0
 #define PWM_FREQUENCY		50
+#define PWM_PERIOD			48000					// 20ms - TODO !! achar periodo
 #define PERIOD_VALUE		100
 #define MIN_DUTY_VALUE		1						// Posicao 0 graus
 #define MAX_DUTY_VALUE		9						// Posicao 180 graus
 
-pwm_channel_t g_pwm_channel_led;
+pwm_channel_t pwm_channel;
 
 
 /* LCD Display Defines */
@@ -120,7 +121,7 @@ void vConfigureTimer(void);
 /* PWM Function */
 
 void vConfigurePWM(void);
-void vPWMUpdateDuty (double duty);
+void vPWMUpdateDuty (unsigned int duty);
 
 /* Buttons Function */
 void vConfigureButton(void);

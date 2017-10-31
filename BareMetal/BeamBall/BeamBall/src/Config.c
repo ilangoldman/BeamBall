@@ -213,59 +213,60 @@ void vSensorISR(const uint32_t id, const uint32_t index) {
 
 
 // Alteram o PWM diretamente
-uint32_t btn_duty = MIN_DUTY_VALUE;
+unsigned int btn_duty = MIN_DUTY_VALUE;
 
 void vButtonLeftISR(const uint32_t id, const uint32_t index) {
 	// aumenta o duty
 	
 	if (btn_duty < MAX_DUTY_VALUE) btn_duty++;
+	//btn_duty += 10;
 	vPWMUpdateDuty(btn_duty);
 	
-	puts("Fim Button Left ISR \r\n");
-	printf("Duty atual: %d\a\n\r",btn_duty);
+	printf("Duty atual: %u\a\n\r",btn_duty);
 }
 
 void vButtonRightISR(const uint32_t id, const uint32_t index) {
 	// diminui o duty
 	
 	if (btn_duty > MIN_DUTY_VALUE) btn_duty--;
+	//btn_duty -= 10;
 	vPWMUpdateDuty(btn_duty);
 	
-	puts("Fim Button Right ISR \r\n");
-	printf("Duty atual: %d\a\n\r",btn_duty);
+	printf("Duty atual: %u\a\n\r",btn_duty);
 }
 
 /* PWM Configuration */
 
-void vConfigurePWM() {
-	
-	pmc_enable_periph_clk(ID_PWM);
-	pwm_channel_disable(PWM, PWM_CHANNEL);
-	pwm_clock_t clock_setting = {
-		.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
-		.ul_clkb = 0,
-		.ul_mck = sysclk_get_cpu_hz()
-	};
-
-	pwm_init(PWM, &clock_setting);
-	
-	/* Initialize PWM channel for LED0 */
-	/* Period is left-aligned */
-	g_pwm_channel_led.alignment = PWM_ALIGN_LEFT;
-	/* Output waveform starts at a low level */
-	g_pwm_channel_led.polarity = PWM_HIGH;
-	/* Use PWM clock A as source clock */
-	g_pwm_channel_led.ul_prescaler = PWM_CMR_CPRE_CLKA;
-	/* Period value of output waveform */
-	g_pwm_channel_led.ul_period = PERIOD_VALUE;
-	/* Duty cycle value of output waveform */
-	g_pwm_channel_led.ul_duty = 50;
-	g_pwm_channel_led.channel = PWM_CHANNEL;
-
-	pwm_channel_init(PWM, &g_pwm_channel_led);
-
-	
-	 //Descomente as linhas de baixo para colocar a interrupcao no PWM
+// EASY MODE
+//void vConfigurePWM() {
+	//
+	//pmc_enable_periph_clk(ID_PWM);
+	//pwm_channel_disable(PWM, PWM_CHANNEL);
+	//pwm_clock_t clock_setting = {
+		//.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
+		//.ul_clkb = 0,
+		//.ul_mck = sysclk_get_cpu_hz()
+	//};
+//
+	//pwm_init(PWM, &clock_setting);
+	//
+	///* Initialize PWM channel for LED0 */
+	///* Period is left-aligned */
+	//pwm_channel.alignment = PWM_ALIGN_LEFT;
+	///* Output waveform starts at a low level */
+	//pwm_channel.polarity = PWM_HIGH;
+	///* Use PWM clock A as source clock */
+	//pwm_channel.ul_prescaler = PWM_CMR_CPRE_CLKA;
+	///* Period value of output waveform */
+	//pwm_channel.ul_period = PERIOD_VALUE;
+	///* Duty cycle value of output waveform */
+	//pwm_channel.ul_duty = MIN_DUTY_VALUE;
+	//pwm_channel.channel = PWM_CHANNEL;
+//
+	//pwm_channel_init(PWM, &pwm_channel);
+//
+	//
+	 ////Descomente as linhas de baixo para colocar a interrupcao no PWM
 	//
 	//pwm_channel_enable_interrupt(PWM, PWM_CHANNEL, 0);
 	//
@@ -274,24 +275,62 @@ void vConfigurePWM() {
 	//NVIC_SetPriority(PWM_IRQn, PWM_PRIORITY);
 	//NVIC_EnableIRQ(PWM_IRQn);
 	//
+//
+	//pwm_channel_enable(PWM, PWM_CHANNEL);
+//}
 
-	pwm_channel_enable(PWM, PWM_CHANNEL);
+// HARD - Registradores
+void vConfigurePWM() {
+	/* Disable the watchdog */
+	WDT->WDT_MR = WDT_MR_WDDIS;
+
+	// disable the PIO (peripheral controls the pin)
+	PIOA->PIO_PDR = PIO_PDR_P23;
+	// select alternate function B (PWML0) for pin PA19
+	PIOA->PIO_ABCDSR[0] |= PIO_ABCDSR_P23;
+	PIOA->PIO_ABCDSR[1] &= ~PIO_ABCDSR_P23;
+	// Enable the PWM peripheral from the Power Manger
+	PMC->PMC_PCER0 = (1 << ID_PWM);
+	// Select the Clock to run at the MCK (4MHz)
+	PWM->PWM_CH_NUM[0].PWM_CMR = PWM_CMR_CPRE_MCK;
+	// select the period 10msec
+	PWM->PWM_CH_NUM[0].PWM_CPRD = PWM_PERIOD;
+	// select the duty cycle
+	PWM->PWM_CH_NUM[0].PWM_CDTY = 800;
+	// enable the channel
+	PWM->PWM_ENA = PWM_ENA_CHID0;
+
+
+
 }
 
-void vPWMUpdateDuty (double duty) {
-	g_pwm_channel_led.channel = PWM_CHANNEL;
-	pwm_channel_update_duty(PWM, &g_pwm_channel_led, duty);
+
+
+void vPWMUpdateDuty (unsigned int duty) {
+	unsigned int uiD = 800;
+
+	unsigned int DD = uiD * duty;
 	
+	
+	PWM->PWM_CH_NUM[0].PWM_CDTY = PWM_PERIOD - DD; //PWM_PERIOD * (duty/100);
+	
+	
+	float d = PWM_PERIOD * (duty/100);
+
+	printf("Period: %u // duty: %u // value: %u\r\n", PWM_PERIOD,duty,DD);
+	printf("PWM Update: %u // %f\r\n", duty, d);
+
 	
 }
 
 // Descomente a funcao de baixo para ativar a interrupcao do PWM
 
-/*void PWM_Handler(void) {
+void PWM_Handler(void) {
 	uint32_t events = pwm_channel_get_interrupt_status(PWM);
-	gpio_toggle_pin(LED0_GPIO);
-	vPWMUpdateDuty(6);
-}*/
+	gpio_toggle_pin(LED1_GPIO);
+	vPWMUpdateDuty(btn_duty);
+	printf("PWM Handler: %u\r\n", btn_duty);
+}
 
 //Configurar botoes com interrupcoes
 void vConfigureButton(){
