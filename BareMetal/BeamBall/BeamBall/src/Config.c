@@ -20,7 +20,7 @@ int iGetSensorCounter() {
 
 void vAddSensorCounter() {
 	sensor_counter++;
-	printf("contador sensor: %i\r\n",sensor_counter);
+	//printf("contador sensor: %i\r\n",sensor_counter);
 }
 
 double dGetDistance() {
@@ -102,6 +102,7 @@ void drawLCD(void) {
 
 // Essa funcao forca outra leitura da malha de controle
 void TC0_Handler(void) {
+	//puts("OKK\r\n");
 	tc_get_status(TC,CHANNEL);
 	vReadSensor();
 }
@@ -112,6 +113,38 @@ void TC1_Handler(void) {
 	vAddSensorCounter();
 	puts("Contando\r\n");
 }
+
+/*
+void TC0_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+	puts("TC0\r\n");
+}
+
+void TC1_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+	puts("TC1\r\n");
+}
+
+void TC2_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+	puts("TC2\r\n");
+}
+
+void TC3_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+	puts("TC3\r\n");
+}
+
+void TC4_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+	puts("TC4\r\n");
+}
+
+void TC5_Handler(void) {
+	tc_get_status(TC,CHANNEL);
+	puts("TC5\r\n");
+}
+*/
 
 void vConfigureTimer() {
 	uint32_t ul_tcclk;
@@ -135,7 +168,8 @@ void vConfigureTimer() {
 	
 	
 	/* Configurando o Timer do contador do Sensor */
-	
+	// TODO!!
+
 	//pmc_enable_periph_clk(ID_TC_SENSOR);
 	//tc_find_mck_divisor(TC_FREQ_SENSOR,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
 	//tc_init(TC_SENSOR,CHANNEL_SENSOR,TC_CMR_CPCTRG|ul_tcclk);
@@ -147,10 +181,13 @@ void vConfigureTimer() {
 	//NVIC_SetPriority(TC_IRQn_SENSOR,TC_SENSOR_PRIORITY);
 	//NVIC_EnableIRQ(TC_IRQn_SENSOR);
 
-	puts("Timer Configurado para 10us\r\n");
+	//puts("Timer Configurado para 10us\r\n");
 
 	tc_start(TC,CHANNEL);
     //tc_start(TC_SENSOR,CHANNEL_SENSOR);
+
+	//vReadSensor();
+
 }
 
 /* ISR Configuration */
@@ -158,7 +195,9 @@ void vConfigureTimer() {
 void vSensorISR(const uint32_t id, const uint32_t index) {
 	puts("Entrou Sensor ISR \r\n");
 	double distance = dGetDistance();
-	printf("Distance Sensor: %d\r\n",distance);
+	//char buffer[50];
+	//sprintf (buffer, "%.2f", distance);
+	//printf("d sensor: %c\r\n",buffer[0]);
 	vMalhaControle(distance);
 }
 
@@ -178,6 +217,9 @@ void vConfigureSensorISR() {
 	pio_enable_interrupt(PIOA,PIO_ECHO);
 	NVIC_SetPriority(PIOA_IRQn, SENSOR_PRIORITY);
 	NVIC_EnableIRQ(PIOA_IRQn);
+
+	// como fazer o output ??
+	//pio_set_output(PIOA, PIO_TRIGGER, 0,1,1);
 }
 
 // Alteram o PWM diretamente
@@ -222,49 +264,6 @@ void vConfigureButton(){
 
 /* PWM Configuration */
 
-// EASY MODE
-//void vConfigurePWM() {
-	//
-	//pmc_enable_periph_clk(ID_PWM);
-	//pwm_channel_disable(PWM, PWM_CHANNEL);
-	//pwm_clock_t clock_setting = {
-		//.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
-		//.ul_clkb = 0,
-		//.ul_mck = sysclk_get_cpu_hz()
-	//};
-//
-	//pwm_init(PWM, &clock_setting);
-	//
-	///* Initialize PWM channel for LED0 */
-	///* Period is left-aligned */
-	//pwm_channel.alignment = PWM_ALIGN_LEFT;
-	///* Output waveform starts at a low level */
-	//pwm_channel.polarity = PWM_HIGH;
-	///* Use PWM clock A as source clock */
-	//pwm_channel.ul_prescaler = PWM_CMR_CPRE_CLKA;
-	///* Period value of output waveform */
-	//pwm_channel.ul_period = PERIOD_VALUE;
-	///* Duty cycle value of output waveform */
-	//pwm_channel.ul_duty = MIN_DUTY_VALUE;
-	//pwm_channel.channel = PWM_CHANNEL;
-//
-	//pwm_channel_init(PWM, &pwm_channel);
-//
-	//
-	 ////Descomente as linhas de baixo para colocar a interrupcao no PWM
-	//
-	//pwm_channel_enable_interrupt(PWM, PWM_CHANNEL, 0);
-	//
-	//NVIC_DisableIRQ(PWM_IRQn);
-	//NVIC_ClearPendingIRQ(PWM_IRQn);
-	//NVIC_SetPriority(PWM_IRQn, PWM_PRIORITY);
-	//NVIC_EnableIRQ(PWM_IRQn);
-	//
-//
-	//pwm_channel_enable(PWM, PWM_CHANNEL);
-//}
-
-
 // HARD - Registradores
 void vConfigurePWM() {
 	/* Disable the watchdog */
@@ -308,3 +307,46 @@ void PWM_Handler(void) {
 	vPWMUpdateDuty(btn_duty);
 	printf("PWM Handler: %u\r\n", btn_duty);
 }
+
+
+// EASY MODE
+//void vConfigurePWM() {
+//
+//pmc_enable_periph_clk(ID_PWM);
+//pwm_channel_disable(PWM, PWM_CHANNEL);
+//pwm_clock_t clock_setting = {
+//.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
+//.ul_clkb = 0,
+//.ul_mck = sysclk_get_cpu_hz()
+//};
+//
+//pwm_init(PWM, &clock_setting);
+//
+///* Initialize PWM channel for LED0 */
+///* Period is left-aligned */
+//pwm_channel.alignment = PWM_ALIGN_LEFT;
+///* Output waveform starts at a low level */
+//pwm_channel.polarity = PWM_HIGH;
+///* Use PWM clock A as source clock */
+//pwm_channel.ul_prescaler = PWM_CMR_CPRE_CLKA;
+///* Period value of output waveform */
+//pwm_channel.ul_period = PERIOD_VALUE;
+///* Duty cycle value of output waveform */
+//pwm_channel.ul_duty = MIN_DUTY_VALUE;
+//pwm_channel.channel = PWM_CHANNEL;
+//
+//pwm_channel_init(PWM, &pwm_channel);
+//
+//
+////Descomente as linhas de baixo para colocar a interrupcao no PWM
+//
+//pwm_channel_enable_interrupt(PWM, PWM_CHANNEL, 0);
+//
+//NVIC_DisableIRQ(PWM_IRQn);
+//NVIC_ClearPendingIRQ(PWM_IRQn);
+//NVIC_SetPriority(PWM_IRQn, PWM_PRIORITY);
+//NVIC_EnableIRQ(PWM_IRQn);
+//
+//
+//pwm_channel_enable(PWM, PWM_CHANNEL);
+//}

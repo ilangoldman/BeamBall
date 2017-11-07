@@ -21,7 +21,7 @@ int main (void)
 	
 	//vConfigureLCD();
 	//drawLCD();
-	
+
 	while (1) { /* RUN APPLICATION */ }
 	
 	puts("Error!!\r\n");	

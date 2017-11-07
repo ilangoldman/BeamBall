@@ -34,7 +34,7 @@
 #define TC_IRQn				TC0_IRQn
 #define TC_FREQ				1000							//100mS
 
-// Timer do Contador do Sensor
+// Timer do Contador do Sensor -> Como configurar o segundo Timer?? TODO!!
 #define TC_SENSOR			TC1
 #define CHANNEL_SENSOR		1
 #define ID_TC_SENSOR		ID_TC1
@@ -43,6 +43,7 @@
 
 /* PWM Defines */
 
+// TODO!!
 #define PWM_CHANNEL			PWM_CHANNEL_0
 #define PWM_FREQUENCY		50
 #define PWM_PERIOD			48000					// 20ms - TODO !! achar periodo
