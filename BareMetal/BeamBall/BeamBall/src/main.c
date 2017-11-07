@@ -13,11 +13,11 @@ int main (void)
 	vConfigureUART();
 
 	puts("Inicializing Beam Ball\r\n");
-	vConfigureButton(); //novo
-	vConfigurePWM();
-	puts("PWM configured complete\r\n");
-	//vConfigureSensorISR();
-	//vConfigureTimer();
+	//vConfigureButton(); //novo
+	//vConfigurePWM();
+	//puts("PWM configured complete\r\n");
+	vConfigureSensorISR();
+	vConfigureTimer();
 	
 	//vConfigureLCD();
 	//drawLCD();

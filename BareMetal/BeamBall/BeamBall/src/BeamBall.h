@@ -12,10 +12,10 @@
 /* BeamBall Priority */
 
 #define SENSOR_PRIORITY		1
-#define TC_PRIORITY			2
-#define TC_SENSOR_PRIORITY	5
-#define PWM_PRIORITY		6
-#define BUTTON_PRIORITY		6
+#define TC_PRIORITY			3
+#define TC_SENSOR_PRIORITY	4
+#define PWM_PRIORITY		2
+#define BUTTON_PRIORITY		2
 
 /* UART Defines */
 
@@ -65,7 +65,7 @@ struct ili9225_opt_t g_ili9225_display_opt;
 /* Sensor Defines */
 
 #define PIO_ECHO			PIO_PA15
-#define PIO_TRIGGER			LED0_GPIO
+#define PIO_TRIGGER			LED1_GPIO
 
 /* End Defines */
 
