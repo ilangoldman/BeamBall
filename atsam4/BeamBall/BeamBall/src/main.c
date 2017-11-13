@@ -16,10 +16,10 @@ int main (void)
 
 	vConfigurePWM();
 	vConfigureISR();
-	vConfigureTimer();
+	//vConfigureTimer();
 	
 	while (1) { /* RUN APPLICATION */ }
 	
-	puts("Error!!\r\n");	
+	puts("Erroooooooouu!!\r\n");	
 	return 0;
 }

@@ -61,7 +61,7 @@ pwm_channel_t g_pwm_channel;
 
 /* Sensor Defines */
 
-#define PIO_ECHO			PIO_BUTTON_LEFT
+#define PIO_ECHO			PIO_PA15
 #define PIO_TRIGGER			PIO_PA19
 
 /* End Defines */

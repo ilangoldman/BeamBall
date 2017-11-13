@@ -13,7 +13,7 @@ void vReadSensor(void) {
 	puts("Iniciando Leitura do Sensor\r\n");
 	
 	// clear timer
-	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
+	//tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
 	vClearSensorCounter();
 	
 	gpio_set_pin_high(PIO_TRIGGER);

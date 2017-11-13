@@ -8,6 +8,22 @@
 #include <asf.h>
 #include "BeamBall.h"
 
+
+/* UART Configuration */
+
+void vConfigureUART(void) {
+	static usart_serial_options_t usart_options = {
+		.baudrate = CONF_UART_BAUDRATE,
+		.charlength = CONF_UART_CHAR_LENGTH,
+		.paritytype = CONF_UART_PARITY,
+		.stopbits = CONF_UART_STOP_BITS
+	};
+	usart_serial_init(CONF_UART, &usart_options);
+	stdio_serial_init((Usart *)CONF_UART, &usart_options);
+}
+
+/* Counter Configuration */
+
 static int sensor_counter = 0;
 
 void vClearSensorCounter() {
@@ -26,36 +42,45 @@ double dGetDistance() {
 	return (sensor_counter/58);
 }
 
-
-/* UART Configuration */
-
-void vConfigureUART(void) {
-	static usart_serial_options_t usart_options = {
-		.baudrate = CONF_UART_BAUDRATE,
-		.charlength = CONF_UART_CHAR_LENGTH,
-		.paritytype = CONF_UART_PARITY,
-		.stopbits = CONF_UART_STOP_BITS
-	};
-	usart_serial_init(CONF_UART, &usart_options);
-	stdio_serial_init((Usart *)CONF_UART, &usart_options);
-}
-
-
 /* Timer Configuration */
 
 // Essa funcao forca outra leitura da malha de controle
 void TC0_Handler(void) {
 	puts("Timer Sensor\r\n");
 	tc_get_status(TC,CHANNEL);
-	vReadSensor();
+	//vReadSensor();
 }
 
 // Essa funcao executa o contador de tempo entre o start do sensor e a sua resposta
-void TC1_Handler(void) {
+void TC3_Handler(void) {
 	puts("Timer Contador\r\n");
 	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
 	vAddSensorCounter();
 }
+
+void TC1_Handler(void) {
+	puts("Timer 1 Contador\r\n");
+	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
+}
+
+
+void TC2_Handler(void) {
+	puts("Timer 2 Contador\r\n");
+	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
+}
+
+
+void TC4_Handler(void) {
+	puts("Timer 4 Contador\r\n");
+	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
+}
+
+
+void TC5_Handler(void) {
+	puts("Timer 5 Contador\r\n");
+	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
+}
+
 
 void vConfigureTimer() {
 	uint32_t ul_tcclk;
@@ -65,14 +90,14 @@ void vConfigureTimer() {
 	
 	/* Configurando o timer da malha de controle */
 	
-	pmc_enable_periph_clk(ID_TC);
-	tc_find_mck_divisor(TC_FREQ,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
-	tc_init(TC,CHANNEL,TC_CMR_CPCTRG|ul_tcclk);
-	RC = (ul_sysclk/ul_div)/TC_FREQ;
-    tc_write_rc(TC,CHANNEL,RC);
-	tc_enable_interrupt(TC,CHANNEL,TC_IER_CPCS);
-	NVIC_SetPriority(TC_IRQn_SENSOR,TC_PRIORITY);
-	NVIC_EnableIRQ(TC_IRQn);
+	//pmc_enable_periph_clk(ID_TC);
+	//tc_find_mck_divisor(TC_FREQ,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
+	//tc_init(TC,CHANNEL,TC_CMR_CPCTRG|ul_tcclk);
+	//RC = (ul_sysclk/ul_div)/TC_FREQ;
+    //tc_write_rc(TC,CHANNEL,RC);
+	//tc_enable_interrupt(TC,CHANNEL,TC_IER_CPCS);
+	//NVIC_SetPriority(TC_IRQn,TC_PRIORITY);
+	//NVIC_EnableIRQ(TC_IRQn);
     
 	puts("Timer 0 Configurado para 100ms\r\n");
 	
@@ -83,7 +108,7 @@ void vConfigureTimer() {
 	tc_find_mck_divisor(TC_FREQ_SENSOR,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
 	tc_init(TC_SENSOR,CHANNEL_SENSOR,TC_CMR_CPCTRG|ul_tcclk);
 	RC = (ul_sysclk/ul_div)/TC_FREQ_SENSOR;
-    tc_write_rc(TC_SENSOR,CHANNEL_SENSOR,RC);
+	tc_write_rc(TC_SENSOR,CHANNEL_SENSOR,RC);
 	tc_enable_interrupt(TC_SENSOR,CHANNEL_SENSOR,TC_IER_CPCS);
 	NVIC_SetPriority(TC_IRQn_SENSOR,TC_SENSOR_PRIORITY);
 	NVIC_EnableIRQ(TC_IRQn_SENSOR);
@@ -97,10 +122,10 @@ void vConfigureTimer() {
 /* ISR Configuration */
 
 void vSensorISR(const uint32_t id, const uint32_t index) {
+	puts("Sensor ISR \r\n");
+	
 	double distance = dGetDistance();
 	vMalhaControle(distance);
-	
-	puts("Sensor ISR \r\n");
 }
 
 uint32_t btn_duty = MIN_DUTY_VALUE;
@@ -181,10 +206,10 @@ void vConfigurePWM() {
 	//NVIC_EnableIRQ(PWM_IRQn);
 	
 	pwm_channel_enable(PWM, PWM_CHANNEL);
-
 }
 
 void vPWMUpdateDuty (double duty) {
+	puts("Update Duty!\r\n");
 	g_pwm_channel.channel = PWM_CHANNEL;
 	pwm_channel_update_duty(PWM, &g_pwm_channel, duty);
 }
