@@ -6,6 +6,9 @@
  *  Author: ilangoldman
  */ 
 
+#include "stdio_serial.h"
+#include "conf_board.h"
+#include "conf_clock.h"
 
 #ifndef BEAMBALL_H_
 #define BEAMBALL_H_
@@ -38,18 +41,18 @@
 // Timer do Contador do Sensor
 #define TC_SENSOR			TC0
 #define CHANNEL_SENSOR		1
-#define ID_TC_SENSOR		ID_TC0
-#define TC_IRQn_SENSOR		TC0_IRQn
+#define ID_TC_SENSOR		ID_TC1
+#define TC_IRQn_SENSOR		TC1_IRQn
 #define TC_FREQ_SENSOR		100000					// t = 10uS (fs = 100000)
 
 /* PWM Defines */
 
-#define PWM_CHANNEL			PWM_CHANNEL_0
+#define PWM_CHANNEL			PIN_PWM_LED1_CHANNEL
 #define PWM_FREQUENCY		50
-#define PERIOD_VALUE		100
-#define MIN_DUTY_VALUE		1						// Posicao 0 graus
-#define MAX_DUTY_VALUE		9						// Posicao 180 graus
-#define INIT_DUTY_VALUE		1
+#define PERIOD_VALUE		200
+#define MIN_DUTY_VALUE		10						// Posicao 0 graus
+#define MAX_DUTY_VALUE		20						// Posicao 180 graus
+#define INIT_DUTY_VALUE		5
 
 pwm_channel_t g_pwm_channel;
 
@@ -62,7 +65,7 @@ pwm_channel_t g_pwm_channel;
 /* Sensor Defines */
 
 #define PIO_ECHO			PIO_PA15
-#define PIO_TRIGGER			PIO_PA19
+#define PIO_TRIGGER			LED0_GPIO
 
 /* End Defines */
 
@@ -97,7 +100,7 @@ void vMalhaControle(double distance);
 /* Motor Functions */
 
 //This task, when activated, will change the position of servo motor
-void vRunMotor(double pos);
+void vRunMotor(int pos);
 
 
 /* CONFIGURATION FUNCTIONS */
@@ -113,6 +116,6 @@ void vConfigureTimer(void);
 /* PWM Function */
 
 void vConfigurePWM(void);
-void vPWMUpdateDuty (double duty);
+void vPWMUpdateDuty (uint32_t duty);
 
 #endif /* BEAMBALL_H_ */
