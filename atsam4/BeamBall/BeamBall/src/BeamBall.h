@@ -13,6 +13,11 @@
 #ifndef BEAMBALL_H_
 #define BEAMBALL_H_
 
+/* MALHA DE CONTROLE */
+#define KP      2.5
+#define KI      0
+#define KD      1.1
+
 /* BeamBall Priority */
 
 #define SENSOR_PRIORITY		1

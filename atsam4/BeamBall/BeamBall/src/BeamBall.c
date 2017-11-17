@@ -25,21 +25,23 @@ static int flag = 0;
 
 void vMalhaControle(double distance) {
 	puts("Executando Malha de Controle\r\n");
-	int motorPos = 8;
+	int motorPos = 15;
 
 	int printVar = (int) (distance * 1000);
 	printf("distance: %i / %f\r\n",printVar);
 
-	//// do some control shit!
 	//if (flag == 0) {
-		//motorPos = 6;
+		//motorPos = 13;
 		//flag = 1;
 	//} else {
-		//motorPos = 9;
+		//motorPos = 18;
 		//flag = 0;
 	//}
 	//
 	//printf("pos: %i \r\n", motorPos);
+
+	//the control shit! VVVV
+	//motorPos = (int) dCalculatePID(distance);
 	
 	// Update Motor position
 	vRunMotor(motorPos);
