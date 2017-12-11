@@ -106,7 +106,7 @@ void clear(void) {
 }
 
 void print(void) {
-	vWriteLCD(10,150,(uint8_t *) "KP");
+	vWriteLCD(10,160,(uint8_t *) "KP");
 	sprintf (buffer, "%.1f", KP);
 	vWriteLCD(100,160,(uint8_t *) buffer);
 	vWriteLCD(10,180,(uint8_t *) "KI");
@@ -212,7 +212,7 @@ void vInitLCD (void) {
 	vWriteLCD(10,100,(uint8_t *)"Distancia: ");
 	vWriteLCD(10,60,(uint8_t *)"Timer: ");
 
-	vWriteLCD(180,260,(uint8_t *)"Ilan\nLucas\nCarlos");
+	vWriteLCD(160,260,(uint8_t *)"Ilan\nLucas\nCarlos");
 // 	vWriteLCD(10,280,(uint8_t *)"Timer: ");
 // 	vWriteLCD(10,300,(uint8_t *)"Timer: ");
 }
