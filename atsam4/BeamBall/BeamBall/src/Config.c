@@ -8,6 +8,7 @@
 #include <asf.h>
 #include "BeamBall.h"
 
+char buffer[50];
 
 /* UART Configuration */
 
@@ -22,41 +23,18 @@ void vConfigureUART(void) {
 	stdio_serial_init((Usart *)CONF_UART, &usart_options);
 }
 
-/* Counter Configuration */
-
-unsigned int sensor_counter = 0;
-
-void vClearSensorCounter() {
-	sensor_counter = 0;
-}
-
-int iGetSensorCounter() {
-	return sensor_counter;
-}
-
-void vAddSensorCounter() {
-	sensor_counter++;
-}
-
-double dGetDistance() {
-	printf("sensor: %u\r\n",sensor_counter);
-	return (sensor_counter/58);
-}
-
 /* Timer Configuration */
+
+unsigned int tc = 0;
 
 // Essa funcao forca outra leitura da malha de controle
 void TC0_Handler(void) {
-	//puts("Timer Sensor\r\n");
 	tc_get_status(TC,CHANNEL);
 	vReadSensor();
-}
-
-// Essa funcao executa o contador de tempo entre o start do sensor e a sua resposta
-void TC1_Handler(void) {
-	//puts("Timer Contador\r\n");
-	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
-	vAddSensorCounter();
+	char b[50];
+	tc++;
+	sprintf (b, "%u", tc);
+	vWriteLCD(140, 60, (uint8_t*) b);
 }
 
 
@@ -67,7 +45,6 @@ void vConfigureTimer() {
 	uint32_t RC;
 	
 	/* Configurando o timer da malha de controle */
-	
 	pmc_enable_periph_clk(ID_TC);
 	tc_find_mck_divisor(TC_FREQ,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
 	tc_init(TC,CHANNEL,TC_CMR_CPCTRG|ul_tcclk);
@@ -77,57 +54,91 @@ void vConfigureTimer() {
 	NVIC_SetPriority(TC_IRQn,TC_PRIORITY);
 	NVIC_EnableIRQ(TC_IRQn);
 	
-	puts("Timer 0 Configurado para 100ms\r\n");
-	
-	
-	/* Configurando o Timer do contador do Sensor */
-	
-	pmc_enable_periph_clk(ID_TC_SENSOR);
-	tc_find_mck_divisor(TC_FREQ_SENSOR,ul_sysclk,&ul_div,&ul_tcclk,ul_sysclk);
-	tc_init(TC_SENSOR,CHANNEL_SENSOR,TC_CMR_CPCTRG|ul_tcclk);
-	RC = (ul_sysclk/ul_div)/TC_FREQ_SENSOR;
-	tc_write_rc(TC_SENSOR,CHANNEL_SENSOR,RC);
-	tc_enable_interrupt(TC_SENSOR,CHANNEL_SENSOR,TC_IER_CPCS);
-	NVIC_SetPriority(TC_IRQn_SENSOR,TC_SENSOR_PRIORITY);
-	NVIC_EnableIRQ(TC_IRQn_SENSOR);
-	
-	puts("Timer 1 Configurado para 10us\r\n");
-	
 	tc_start(TC,CHANNEL);
-    tc_start(TC_SENSOR,CHANNEL_SENSOR);
 }
 
 /* ISR Configuration */
+unsigned int sensor_counter;
+int last_dist = 0;
 
 void vSensorISR(const uint32_t id, const uint32_t index) {
-	puts("Sensor ISR \r\n");
 	
-	double distance = dGetDistance();
-	vMalhaControle(distance);
+	sensor_counter = 0;
+	while (pio_get(PIOA,PIO_INPUT,PIO_ECHO) == 1) {
+		sensor_counter++;
+	} 
+	
+	double uS_clock_cicles = (sysclk_get_cpu_hz() / 1000000);
+	double uScounter = sensor_counter / uS_clock_cicles;
+	double dist = (uScounter/58)*32;
+	
+
+// 	if (dist > 24) {
+// 		if (last_dist > 6 ) dist = 24;
+// 		else dist = 5;
+// 	}
+	vMalhaControle(dist);
+	last_dist = dist;
 }
 
 uint32_t btn_duty = MIN_DUTY_VALUE;
 
+double KP   =   0.3;
+double KI   =   0.1;
+double KD	=	0.6;
+
+double getKP(void) {
+	return KP;
+}
+
+double getKD(void) {
+	return KD;
+}
+
+double getKI(void) {
+	return KI;
+}
+
+void clear(void) {
+	KP = 0.3;
+	KI = 0.1;
+	KD = 0.6;
+}
+
+void print(void) {
+	vWriteLCD(10,150,(uint8_t *) "KP");
+	sprintf (buffer, "%.1f", KP);
+	vWriteLCD(100,160,(uint8_t *) buffer);
+	vWriteLCD(10,180,(uint8_t *) "KI");
+	sprintf (buffer, "%.1f", KI);
+	vWriteLCD(100,180,(uint8_t *) buffer);
+	vWriteLCD(10,200,(uint8_t *) "KD");
+	sprintf (buffer, "%.1f", KD);
+	vWriteLCD(100,200,(uint8_t *) buffer);
+}
+
 // Alteram o PWM diretamente
 void vButtonLeftISR(const uint32_t id, const uint32_t index) {
 	// aumenta o duty
-	if (btn_duty < MAX_DUTY_VALUE) btn_duty++;
-	vPWMUpdateDuty(btn_duty);
-	
-	puts("Button Left ISR \r\n");
+	//if (btn_duty < MAX_DUTY_VALUE) btn_duty++;
+	//vPWMUpdateDuty(btn_duty);
+	KD += 0.1;
+	vWriteLCD(10,200,(uint8_t *) "KD");
+	sprintf (buffer, "%.1f", KD);
+	vWriteLCD(100,200,(uint8_t *) buffer);
 }
 
 void vButtonRightISR(const uint32_t id, const uint32_t index) {
 	// diminui o duty
-	if (btn_duty > MIN_DUTY_VALUE) btn_duty--;
-	vPWMUpdateDuty(btn_duty);
-	
-	puts("Button Right ISR \r\n");
+	//if (btn_duty > MIN_DUTY_VALUE) btn_duty--;
+	//vPWMUpdateDuty(btn_duty);
+	KP += 0.1;
+	vWriteLCD(10,150,(uint8_t *) "KP");
+	sprintf (buffer, "%.1f", KP);
+	vWriteLCD(100,150,(uint8_t *) buffer);
 }
 
 void vConfigureISR() {
-	puts("Configuracao Sensor ISR \r\n");
-	
 	/* Configuracao da ISR no PIO_ECHO do Sensor */
 	pio_set_input(PIOA, PIO_ECHO, PIO_DEBOUNCE);
 	pio_pull_down(PIOA,PIO_ECHO,1);
@@ -148,6 +159,8 @@ void vConfigureISR() {
 	pio_enable_interrupt(PIOC,PIO_BUTTON_RIGTH);
 	NVIC_SetPriority(PIOC_IRQn, BUTTON_PRIORITY);
 	NVIC_EnableIRQ(PIOC_IRQn);
+	
+	pio_set_output(PIOA,PIO_TRIGGER,1,0,0);
 }
 
 /* PWM Configuration */
@@ -172,15 +185,73 @@ void vConfigurePWM() {
 }
 
 void vPWMUpdateDuty (uint32_t duty) {
-	puts("Update Duty!\r\n");
 	g_pwm_channel.channel = PWM_CHANNEL;
 	pwm_channel_update_duty(PWM, &g_pwm_channel, duty);
+	sprintf (buffer, "%lu", duty);
+	vWriteLCD(140,80,(uint8_t *) buffer);
 }
 
-// Descomente a funcao de baixo para ativar a interrupcao do PWM
-/*
-void PWM_Handler(void) {
-	gpio_toggle_pin(LED0_GPIO);
-	vPWMUpdateDuty(6);
+void vWriteLCD(int x,int y, uint8_t* text) {
+	ili93xx_set_foreground_color(COLOR_WHITE);
+	ili93xx_draw_filled_rectangle(x-10, y-5, x+100, y+15);
+
+	ili93xx_set_foreground_color(COLOR_BLACK);
+	ili93xx_draw_string(x, y, text);
 }
-*/
+
+void vInitLCD (void) {
+	ili93xx_set_foreground_color(COLOR_WHITE);
+	ili93xx_draw_filled_rectangle(0, 0, ILI93XX_LCD_WIDTH,ILI93XX_LCD_HEIGHT);
+
+	/** Turn on LCD */
+	ili93xx_display_on();
+	ili93xx_set_cursor_position(0, 0);
+	
+	vWriteLCD(10,20,(uint8_t *)"BeamBall\n");
+	vWriteLCD(10,80,(uint8_t *)"PWM Duty: ");
+	vWriteLCD(10,100,(uint8_t *)"Distancia: ");
+	vWriteLCD(10,60,(uint8_t *)"Timer: ");
+
+	vWriteLCD(180,260,(uint8_t *)"Ilan\nLucas\nCarlos");
+// 	vWriteLCD(10,280,(uint8_t *)"Timer: ");
+// 	vWriteLCD(10,300,(uint8_t *)"Timer: ");
+}
+
+
+
+void vConfigureLCD(void) {
+	/** Enable peripheral clock */
+	pmc_enable_periph_clk(ID_SMC);
+
+	/** Configure SMC interface for Lcd */
+	smc_set_setup_timing(SMC, ILI93XX_LCD_CS, SMC_SETUP_NWE_SETUP(2)
+											| SMC_SETUP_NCS_WR_SETUP(2)
+											| SMC_SETUP_NRD_SETUP(2)
+											| SMC_SETUP_NCS_RD_SETUP(2));
+	smc_set_pulse_timing(SMC, ILI93XX_LCD_CS, SMC_PULSE_NWE_PULSE(4)
+											| SMC_PULSE_NCS_WR_PULSE(4)
+											| SMC_PULSE_NRD_PULSE(10)
+											| SMC_PULSE_NCS_RD_PULSE(10));
+	smc_set_cycle_timing(SMC, ILI93XX_LCD_CS, SMC_CYCLE_NWE_CYCLE(10)
+											| SMC_CYCLE_NRD_CYCLE(22));
+	
+	smc_set_mode(SMC, ILI93XX_LCD_CS, SMC_MODE_READ_MODE
+									| SMC_MODE_WRITE_MODE);
+	
+	/** Initialize display parameter */
+	g_ili93xx_display_opt.ul_width = ILI93XX_LCD_WIDTH;
+	g_ili93xx_display_opt.ul_height = ILI93XX_LCD_HEIGHT;
+	g_ili93xx_display_opt.foreground_color = COLOR_BLACK;
+	g_ili93xx_display_opt.background_color = COLOR_WHITE;
+
+	/** Switch off backlight */
+	aat31xx_disable_backlight();
+
+	/** Initialize LCD */
+	ili93xx_init(&g_ili93xx_display_opt);
+
+	/** Set backlight level */
+	aat31xx_set_backlight(AAT31XX_AVG_BACKLIGHT_LEVEL);
+
+	vInitLCD();
+}

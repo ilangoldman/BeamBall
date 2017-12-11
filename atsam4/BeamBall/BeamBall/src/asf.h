@@ -59,6 +59,14 @@
 // From module: Delay routines
 #include <delay.h>
 
+// From module: Display - AAT31XX Backlight Controller
+#include <aat31xx.h>
+
+// From module: Display - ILI93xx LCD Controller
+#include <ili9325_regs.h>
+#include <ili9341_regs.h>
+#include <ili93xx.h>
+
 // From module: GPIO - General purpose Input/Output
 #include <gpio.h>
 
@@ -86,6 +94,9 @@
 
 // From module: SAM4S-EK2 LED support enabled
 #include <led.h>
+
+// From module: SMC - Static Memory Controller
+#include <smc.h>
 
 // From module: Standard serial I/O (stdio) - SAM implementation
 #include <stdio_serial.h>

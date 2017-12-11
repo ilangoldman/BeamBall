@@ -57,4 +57,11 @@
 #define CONF_BOARD_PWM_LED0
 #define CONF_BOARD_PWM_LED1
 
+/* Indicates board has an AAT3155 external component to control LCD backlight */
+#define CONF_BOARD_AAT3155
+
+/* Indicates board has an ILI93xx external component to control LCD */
+#define CONF_BOARD_ILI93XX
+
+
 #endif /* CONF_BOARD_H */

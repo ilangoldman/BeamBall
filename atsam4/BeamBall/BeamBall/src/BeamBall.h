@@ -13,25 +13,22 @@
 #ifndef BEAMBALL_H_
 #define BEAMBALL_H_
 
-/* MALHA DE CONTROLE */
-#define KP      2.5
-#define KI      0
-#define KD      1.1
+double getKP(void);
+double getKI(void);
+double getKD(void);
+void clear(void);
+void print(void);
 
 /* BeamBall Priority */
 
 #define SENSOR_PRIORITY		1
 #define TC_PRIORITY			3
-#define TC_SENSOR_PRIORITY	4
 #define PWM_PRIORITY		2
 #define BUTTON_PRIORITY		2
 
 /* UART Defines */
 
-#define CONF_UART              UART0				// definicao da porta
-#define CONF_UART_BAUDRATE     115200				// define o baud rate (velocidade)
 #define CONF_UART_CHAR_LENGTH  US_MR_CHRL_8_BIT		// define o tamanho de dados a ser enviado
-#define CONF_UART_PARITY       US_MR_PAR_NO			// define a paridade
 #define CONF_UART_STOP_BITS    US_MR_NBSTOP_1_BIT	// define o tamanho do bit de parada
 
 /* Timer Defines */
@@ -41,36 +38,35 @@
 #define CHANNEL				0
 #define ID_TC				ID_TC0
 #define TC_IRQn				TC0_IRQn
-#define TC_FREQ				1000							//100mS
-
-// Timer do Contador do Sensor
-#define TC_SENSOR			TC0
-#define CHANNEL_SENSOR		1
-#define ID_TC_SENSOR		ID_TC1
-#define TC_IRQn_SENSOR		TC1_IRQn
-#define TC_FREQ_SENSOR		100000					// t = 10uS (fs = 100000)
+#define TC_FREQ				10							
 
 /* PWM Defines */
 
-#define PWM_CHANNEL			PIN_PWM_LED1_CHANNEL
+#define PWM_CHANNEL			PIN_PWM_LED1_CHANNEL	//PA20
 #define PWM_FREQUENCY		50
 #define PERIOD_VALUE		200
 #define MIN_DUTY_VALUE		10						// Posicao 0 graus
-#define MAX_DUTY_VALUE		20						// Posicao 180 graus
-#define INIT_DUTY_VALUE		5
+#define MAX_DUTY_VALUE		18						// Posicao 180 graus
+#define INIT_DUTY_VALUE		13
 
 pwm_channel_t g_pwm_channel;
 
 
 /* PIO Defines */
 
-#define PIO_BUTTON_LEFT		PIO_PB3
-#define PIO_BUTTON_RIGTH	PIO_PC12
+#define PIO_BUTTON_LEFT		PIO_PB3		//PB3
+#define PIO_BUTTON_RIGTH	PIO_PC12	//PC12
 
 /* Sensor Defines */
 
-#define PIO_ECHO			PIO_PA15
-#define PIO_TRIGGER			LED0_GPIO
+#define PIO_ECHO			PIO_PA15	//PA15
+#define PIO_TRIGGER			PIO_PA19	//PA19
+
+/* LCD Defines */
+
+#define ILI93XX_LCD_CS      1
+struct ili93xx_opt_t g_ili93xx_display_opt;
+
 
 /* End Defines */
 
@@ -122,5 +118,12 @@ void vConfigureTimer(void);
 
 void vConfigurePWM(void);
 void vPWMUpdateDuty (uint32_t duty);
+
+/* LCD Functions */
+
+void vInitLCD (void);
+void vWriteLCD(int x,int y, uint8_t* text);
+void vConfigureLCD(void);
+
 
 #endif /* BEAMBALL_H_ */

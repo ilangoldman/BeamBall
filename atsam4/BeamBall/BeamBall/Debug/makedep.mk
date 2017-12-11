@@ -18,6 +18,12 @@ src\ASF\sam\boards\sam4s_ek2\init.c
 
 src\ASF\sam\boards\sam4s_ek2\led.c
 
+src\ASF\sam\components\display\aat31xx\aat31xx.c
+
+src\ASF\sam\components\display\ili93xx\ili93xx.c
+
+src\ASF\sam\drivers\ebi\smc\smc.c
+
 src\ASF\sam\drivers\pio\pio.c
 
 src\ASF\sam\drivers\pio\pio_handler.c

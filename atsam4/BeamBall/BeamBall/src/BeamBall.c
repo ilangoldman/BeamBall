@@ -8,45 +8,47 @@
 #include <asf.h>
 #include "BeamBall.h"
 
-
 void vReadSensor(void) {
-	//puts("Iniciando Leitura do Sensor\r\n");
+	pio_clear(PIOA,PIO_TRIGGER);
+	delay_us(2);
 	
-	// clear timer
-	tc_get_status(TC_SENSOR,CHANNEL_SENSOR);
-	vClearSensorCounter();
-	
-	gpio_set_pin_high(PIO_TRIGGER);
+	pio_set(PIOA,PIO_TRIGGER);
 	delay_us(10);
-	gpio_set_pin_low(PIO_TRIGGER);
+	pio_clear(PIOA,PIO_TRIGGER);
 }
 
-static int flag = 0;
+//static int flag = 0;
+int last_error = 0;
+int integral = 0;
 
 void vMalhaControle(double distance) {
-	puts("Executando Malha de Controle\r\n");
+
 	int motorPos = 15;
-
-	int printVar = (int) (distance * 1000);
-	printf("distance: %i / %f\r\n",printVar);
-
-	//if (flag == 0) {
-		//motorPos = 13;
-		//flag = 1;
-	//} else {
-		//motorPos = 18;
-		//flag = 0;
-	//}
-	//
-	//printf("pos: %i \r\n", motorPos);
-
-	//the control shit! VVVV
-	//motorPos = (int) dCalculatePID(distance);
+	int iDist = (int) distance;
 	
+	char buffer[50];
+	sprintf (buffer, "%d", iDist);
+	vWriteLCD(140, 100, (uint8_t*) buffer);
+
+ 	int target = 10;
+
+	double error = target - iDist;
+	integral = integral + (error*1);
+	double derivative = (error - last_error)/1;
+	int pid = getKP()*error + getKI()*integral + getKD()*derivative;// + bias
+	last_error = error;
+	
+	motorPos = - pid + INIT_DUTY_VALUE;
+	 
+	if (motorPos < MIN_DUTY_VALUE)
+		 motorPos = MIN_DUTY_VALUE;
+	else if (motorPos > MAX_DUTY_VALUE)
+		motorPos = MAX_DUTY_VALUE;
+
 	// Update Motor position
 	vRunMotor(motorPos);
 }
 
 void vRunMotor(int pos) {
-	//vPWMUpdateDuty(pos);
+	vPWMUpdateDuty(pos);
 }
