@@ -2,6 +2,11 @@
  *
  *  Beam Ball Main File
  *
+ *	Created By:
+ *		Ilan Goldman
+ *		Lucas Deliberato
+ *		Carlos Eduardo
+ *
  */
 #include <asf.h>
 #include "BeamBall.h"       

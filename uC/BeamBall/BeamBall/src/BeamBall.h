@@ -1,9 +1,8 @@
 
 /*
- * BeamBall.h
  *
- * Created: 24/10/2017 21:27:26
- *  Author: ilangoldman
+ * Project Defines and function declarations
+ *	
  */ 
 
 #include "stdio_serial.h"
@@ -12,12 +11,6 @@
 
 #ifndef BEAMBALL_H_
 #define BEAMBALL_H_
-
-double getKP(void);
-double getKI(void);
-double getKD(void);
-void clear(void);
-void print(void);
 
 /* BeamBall Priority */
 
@@ -72,6 +65,13 @@ struct ili93xx_opt_t g_ili93xx_display_opt;
 
 
 /* BEAM BALL FUNCTIONS */
+
+/* Control Constant Functions */
+double getKP(void);
+double getKI(void);
+double getKD(void);
+void clear(void);
+void print(void);
 
 
 /* Sensor Functions */

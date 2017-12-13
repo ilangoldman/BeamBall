@@ -1,8 +1,7 @@
 /*
- * Config.c
  *
- * Created: 09/11/2017 16:38:06
- *  Author: ilangoldman
+ * System configuration Functions
+ *
  */ 
 
 #include <asf.h>
@@ -72,11 +71,6 @@ void vSensorISR(const uint32_t id, const uint32_t index) {
 	double uScounter = sensor_counter / uS_clock_cicles;
 	double dist = (uScounter/58)*32;
 	
-
-// 	if (dist > 24) {
-// 		if (last_dist > 6 ) dist = 24;
-// 		else dist = 5;
-// 	}
 	vMalhaControle(dist);
 	last_dist = dist;
 }
@@ -117,11 +111,8 @@ void print(void) {
 	vWriteLCD(100,200,(uint8_t *) buffer);
 }
 
-// Alteram o PWM diretamente
+// Alteram as constantes de controle
 void vButtonLeftISR(const uint32_t id, const uint32_t index) {
-	// aumenta o duty
-	//if (btn_duty < MAX_DUTY_VALUE) btn_duty++;
-	//vPWMUpdateDuty(btn_duty);
 	KD += 0.1;
 	vWriteLCD(10,200,(uint8_t *) "KD");
 	sprintf (buffer, "%.1f", KD);
@@ -129,16 +120,14 @@ void vButtonLeftISR(const uint32_t id, const uint32_t index) {
 }
 
 void vButtonRightISR(const uint32_t id, const uint32_t index) {
-	// diminui o duty
-	//if (btn_duty > MIN_DUTY_VALUE) btn_duty--;
-	//vPWMUpdateDuty(btn_duty);
 	KP += 0.1;
-	vWriteLCD(10,150,(uint8_t *) "KP");
+	vWriteLCD(10,160,(uint8_t *) "KP");
 	sprintf (buffer, "%.1f", KP);
-	vWriteLCD(100,150,(uint8_t *) buffer);
+	vWriteLCD(100,160,(uint8_t *) buffer);
 }
 
 void vConfigureISR() {
+	
 	/* Configuracao da ISR no PIO_ECHO do Sensor */
 	pio_set_input(PIOA, PIO_ECHO, PIO_DEBOUNCE);
 	pio_pull_down(PIOA,PIO_ECHO,1);
@@ -213,8 +202,6 @@ void vInitLCD (void) {
 	vWriteLCD(10,60,(uint8_t *)"Timer: ");
 
 	vWriteLCD(160,260,(uint8_t *)"Ilan\nLucas\nCarlos");
-// 	vWriteLCD(10,280,(uint8_t *)"Timer: ");
-// 	vWriteLCD(10,300,(uint8_t *)"Timer: ");
 }
 
 
